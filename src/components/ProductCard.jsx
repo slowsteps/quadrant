@@ -1,0 +1,155 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Pencil, Trash2, Check, X } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+export default function ProductCard({ product, x, y, containerRef, onDragEnd, isDraggingEnabled = true }) {
+    const { updateProduct, deleteProduct, activeXAxisId, activeYAxisId } = useApp();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(product.name);
+    const [editLogoUrl, setEditLogoUrl] = useState(product.logoUrl || '');
+    const inputRef = useRef(null);
+    const isDragging = useRef(false);
+
+    const colors = [
+        { bg: 'bg-white', border: 'border-slate-200' },
+        { bg: 'bg-red-100', border: 'border-red-200' },
+        { bg: 'bg-orange-100', border: 'border-orange-200' },
+        { bg: 'bg-amber-100', border: 'border-amber-200' },
+        { bg: 'bg-emerald-100', border: 'border-emerald-200' },
+        { bg: 'bg-cyan-100', border: 'border-cyan-200' },
+        { bg: 'bg-blue-100', border: 'border-blue-200' },
+        { bg: 'bg-indigo-100', border: 'border-indigo-200' },
+        { bg: 'bg-violet-100', border: 'border-violet-200' },
+        { bg: 'bg-fuchsia-100', border: 'border-fuchsia-200' },
+        { bg: 'bg-pink-100', border: 'border-pink-200' },
+    ];
+
+    useEffect(() => {
+        if (isEditing) {
+            inputRef.current?.focus();
+        }
+    }, [isEditing]);
+
+    const handleSaveName = () => {
+        if (editName.trim()) {
+            updateProduct(product.id, {
+                name: editName.trim(),
+                logoUrl: editLogoUrl.trim()
+            });
+        } else {
+            setEditName(product.name);
+            setEditLogoUrl(product.logoUrl || '');
+        }
+        setIsEditing(false);
+    };
+
+    const handleCancelEdit = () => {
+        setEditName(product.name);
+        setEditLogoUrl(product.logoUrl || '');
+        setIsEditing(false);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleSaveName();
+        if (e.key === 'Escape') handleCancelEdit();
+    };
+
+    const handleColorSelect = (color) => {
+        updateProduct(product.id, { color: `${color.bg} ${color.border}` });
+    };
+
+    // Default color if none set
+    const cardColor = product.color || 'bg-white border-slate-200';
+
+    return (
+        <motion.div
+            drag={isDraggingEnabled}
+            dragMomentum={false}
+            onDragStart={() => { isDragging.current = true; }}
+            onDragEnd={(e, info) => {
+                isDragging.current = false;
+                onDragEnd(e, info);
+            }}
+            animate={{ x, y }}
+            transition={{ duration: 0 }}
+            style={{ touchAction: 'none' }}
+            className="absolute top-0 left-0 cursor-grab active:cursor-grabbing group z-10 hover:z-20"
+        >
+            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all`}>
+                {isEditing ? (
+                    <div className="flex flex-col gap-2 w-full">
+                        <input
+                            ref={inputRef}
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Product Name"
+                            className="w-full text-sm font-medium text-slate-800 bg-white/50 border border-black/10 rounded px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <input
+                            value={editLogoUrl}
+                            onChange={(e) => setEditLogoUrl(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Logo URL (optional)"
+                            className="w-full text-xs text-slate-600 bg-white/50 border border-black/10 rounded px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <div className="flex flex-wrap gap-1 justify-center">
+                            {colors.map((c, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => handleColorSelect(c)}
+                                    className={`w-4 h-4 rounded-full ${c.bg} border ${c.border} hover:scale-125 transition-transform`}
+                                />
+                            ))}
+                        </div>
+                        <button
+                            onClick={handleSaveName}
+                            className="text-xs bg-indigo-600 text-white px-2 py-1 rounded self-center"
+                        >
+                            Done
+                        </button>
+                    </div>
+                ) : (
+                    <div
+                        className="flex flex-col items-center gap-2 w-full"
+                        onDoubleClick={() => setIsEditing(true)}
+                    >
+                        {product.logoUrl && (
+                            <img
+                                src={product.logoUrl}
+                                alt={product.name}
+                                className="w-8 h-8 object-contain select-none pointer-events-none"
+                                onError={(e) => e.target.style.display = 'none'}
+                            />
+                        )}
+                        <div className="text-sm font-bold text-slate-800 text-center break-words w-full px-1 select-none">
+                            {product.name}
+                        </div>
+                        {/* <div className="text-[10px] font-medium text-slate-400 select-none">
+                            {Math.round(product.axisValues[activeXAxisId] ?? 50)}% / {Math.round(product.axisValues[activeYAxisId] ?? 50)}%
+                        </div> */}
+                    </div>
+                )}
+
+                {/* Hover Actions */}
+                {!isEditing && (
+                    <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200"
+                        >
+                            <Pencil size={12} />
+                        </button>
+                        <button
+                            onClick={() => deleteProduct(product.id)}
+                            className="p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-red-600 hover:border-red-200"
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    );
+}
