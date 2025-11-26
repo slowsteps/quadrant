@@ -138,7 +138,7 @@ export function AppProvider({ children }) {
             .select('id')
             .eq('user_id', user.id)
             .eq('name', currentFileName)
-            .single();
+            .maybeSingle();
 
         const payload = {
             user_id: user.id,
