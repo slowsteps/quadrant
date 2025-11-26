@@ -2,6 +2,8 @@
 import React, { useRef, useState } from 'react';
 import { Plus, Download, Upload, Save } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthProvider';
+import { Cloud, CloudDownload } from 'lucide-react';
 
 export default function Controls() {
     const {
@@ -14,8 +16,13 @@ export default function Controls() {
         currentFileName, setCurrentFileName,
         fileHandle, setFileHandle,
         activeXAxisId: xId, activeYAxisId: yId,
-        isDirty, setIsDirty
+        isDirty, setIsDirty,
+        saveToCloud, fetchQuadrants, loadQuadrant
     } = useApp();
+
+    const { user } = useAuth();
+    const [showCloudLoad, setShowCloudLoad] = useState(false);
+    const [cloudFiles, setCloudFiles] = useState([]);
 
     const fileInputRef = useRef(null);
 
@@ -50,7 +57,15 @@ export default function Controls() {
     };
 
     const handleSave = async () => {
-        if (fileHandle) {
+        if (user) {
+            try {
+                await saveToCloud();
+                alert('Saved to Supabase!');
+            } catch (err) {
+                console.error(err);
+                alert('Failed to save to Supabase');
+            }
+        } else if (fileHandle) {
             await saveToHandle(fileHandle);
         } else {
             downloadFile(currentFileName);
@@ -135,6 +150,31 @@ export default function Controls() {
         }
     };
 
+    const handleCloudLoadClick = async () => {
+        if (!showCloudLoad) {
+            try {
+                const files = await fetchQuadrants();
+                setCloudFiles(files);
+                setShowCloudLoad(true);
+            } catch (err) {
+                console.error(err);
+                alert('Failed to fetch files');
+            }
+        } else {
+            setShowCloudLoad(false);
+        }
+    };
+
+    const loadCloudFile = async (id) => {
+        try {
+            await loadQuadrant(id);
+            setShowCloudLoad(false);
+        } catch (err) {
+            console.error(err);
+            alert('Failed to load file');
+        }
+    };
+
     return (
         <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -180,8 +220,8 @@ export default function Controls() {
                     onClick={handleSave}
                     disabled={!isDirty}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${isDirty
-                            ? 'text-indigo-600 hover:bg-indigo-50'
-                            : 'text-slate-400'
+                        ? 'text-indigo-600 hover:bg-indigo-50'
+                        : 'text-slate-400'
                         }`}
                     title={isDirty ? `Save as ${currentFileName}.json` : 'No changes to save'}
                 >
@@ -214,6 +254,45 @@ export default function Controls() {
                     className="hidden"
                 />
             </div>
+
+            {user && (
+                <div className="relative">
+                    <button
+                        onClick={handleCloudLoadClick}
+                        className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium"
+                        title="Load from Cloud"
+                    >
+                        <CloudDownload size={18} />
+                        Cloud Load
+                    </button>
+
+                    {showCloudLoad && (
+                        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 z-50 max-h-96 overflow-y-auto">
+                            <div className="p-2">
+                                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">Saved Quadrants</h3>
+                                {cloudFiles.length === 0 ? (
+                                    <div className="text-sm text-slate-400 px-2 py-1">No saved files</div>
+                                ) : (
+                                    <div className="flex flex-col gap-1">
+                                        {cloudFiles.map(file => (
+                                            <button
+                                                key={file.id}
+                                                onClick={() => loadCloudFile(file.id)}
+                                                className="text-left px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-md transition-colors truncate"
+                                            >
+                                                {file.name}
+                                                <span className="block text-xs text-slate-400">
+                                                    {new Date(file.updated_at).toLocaleDateString()}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

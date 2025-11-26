@@ -3,7 +3,8 @@ import { LayoutGrid, Settings } from 'lucide-react';
 import QuadrantChart from './QuadrantChart';
 import AxisEditor from './AxisEditor';
 import Controls from './Controls';
-import { AppProvider, useApp } from '../context/AppContext'; // Added useApp import
+import { AppProvider, useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthProvider';
 
 function LayoutContent() {
     // Original: const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -21,8 +22,9 @@ function LayoutContent() {
     // unless explicitly told to refactor `LayoutContent` to accept props.
     // The primary change is the header and the use of `useApp`.
 
-    const [isPanelOpen, setIsPanelOpen] = useState(false); // Keeping this as per original structure
-    const { currentFileName, updateFileName } = useApp(); // Added useApp hook
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const { currentFileName, updateFileName } = useApp();
+    const { user, signInWithGoogle, signOut } = useAuth();
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
@@ -39,6 +41,28 @@ function LayoutContent() {
                         style={{ width: `${Math.max(10, currentFileName.length)}ch` }}
                         placeholder="Untitled"
                     />
+                </div>
+                <div className="flex items-center gap-3">
+                    {user ? (
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm text-slate-600">
+                                {user.email}
+                            </span>
+                            <button
+                                onClick={signOut}
+                                className="text-sm text-slate-600 hover:text-slate-900 font-medium"
+                            >
+                                Sign Out
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={signInWithGoogle}
+                            className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+                        >
+                            Sign In
+                        </button>
+                    )}
                 </div>
                 <button
                     onClick={() => setIsPanelOpen(!isPanelOpen)}

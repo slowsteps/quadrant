@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { useAuth } from './AuthProvider';
 
 const AppContext = createContext();
 
@@ -21,6 +23,7 @@ export function AppProvider({ children }) {
     const [currentFileName, setCurrentFileName] = useState('quadrant-data');
     const [fileHandle, setFileHandle] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
+    const { user } = useAuth();
 
     const generateId = () => {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -117,7 +120,71 @@ export function AppProvider({ children }) {
         setCurrentFileName(name);
         setIsDirty(true);
     };
+    const saveToCloud = async () => {
+        if (!user) throw new Error('User not authenticated');
 
+        const data = { axes, products, activeXAxisId, activeYAxisId };
+
+        // Check if we already have a cloud ID for this file (we might need to store it)
+        // For now, let's just use the currentFileName as the name and upsert based on name + user_id?
+        // Or better, let's query to see if a quadrant with this name exists for this user.
+
+        // Simple approach: Upsert based on an ID if we have one, or create new.
+        // But we don't have a cloud ID in state yet.
+        // Let's try to find by name first.
+
+        const { data: existing } = await supabase
+            .from('quadrants')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('name', currentFileName)
+            .single();
+
+        const payload = {
+            user_id: user.id,
+            name: currentFileName,
+            data: data,
+            updated_at: new Date()
+        };
+
+        if (existing) {
+            payload.id = existing.id;
+        }
+
+        const { error } = await supabase
+            .from('quadrants')
+            .upsert(payload);
+
+        if (error) throw error;
+        setIsDirty(false);
+        return true;
+    };
+
+    const fetchQuadrants = async () => {
+        if (!user) return [];
+        const { data, error } = await supabase
+            .from('quadrants')
+            .select('id, name, updated_at')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    };
+
+    const loadQuadrant = async (id) => {
+        const { data, error } = await supabase
+            .from('quadrants')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+
+        if (data && data.data) {
+            loadData(data.data, data.name);
+        }
+    };
     return (
         <AppContext.Provider value={{
             axes, addAxis, updateAxis, deleteAxis,
@@ -127,7 +194,9 @@ export function AppProvider({ children }) {
             loadData,
             currentFileName, setCurrentFileName, updateFileName,
             fileHandle, setFileHandle,
-            isDirty, setIsDirty
+            fileHandle, setFileHandle,
+            isDirty, setIsDirty,
+            saveToCloud, fetchQuadrants, loadQuadrant
         }}>
             {children}
         </AppContext.Provider>
