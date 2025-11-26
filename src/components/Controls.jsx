@@ -1,9 +1,8 @@
 
 import React, { useRef, useState } from 'react';
-import { Plus, Download, Upload, Save } from 'lucide-react';
+import { Plus, Save, CloudDownload, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthProvider';
-import { Cloud, CloudDownload } from 'lucide-react';
 
 export default function Controls() {
     const {
@@ -23,130 +22,21 @@ export default function Controls() {
     const { user } = useAuth();
     const [showCloudLoad, setShowCloudLoad] = useState(false);
     const [cloudFiles, setCloudFiles] = useState([]);
-
-    const fileInputRef = useRef(null);
-
-    const downloadFile = (fileName) => {
-        const data = { axes, products, activeXAxisId: xId, activeYAxisId: yId };
-        console.log('Saving JSON:', data);
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName.endsWith('.json') ? fileName : `${fileName}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setIsDirty(false);
-    };
-
-    const saveToHandle = async (handle) => {
-        try {
-            const writable = await handle.createWritable();
-            const data = { axes, products, activeXAxisId: xId, activeYAxisId: yId };
-            console.log('Saving JSON:', data);
-            await writable.write(JSON.stringify(data, null, 2));
-            await writable.close();
-            setIsDirty(false);
-        } catch (err) {
-            console.error('Failed to save file:', err);
-            // Fallback to download if write fails
-            downloadFile(currentFileName);
-        }
-    };
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = async () => {
         if (user) {
             try {
+                setIsSaving(true);
                 await saveToCloud();
-                alert('Saved to Supabase!');
+                // Success is indicated by button state returning to normal (or we could keep a brief success state)
+                // But user asked for spinner next to disabled save button.
             } catch (err) {
                 console.error(err);
                 alert('Failed to save to Supabase');
+            } finally {
+                setIsSaving(false);
             }
-        } else if (fileHandle) {
-            await saveToHandle(fileHandle);
-        } else {
-            downloadFile(currentFileName);
-        }
-    };
-
-    const handleSaveAs = async () => {
-        if ('showSaveFilePicker' in window) {
-            try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: `${currentFileName}.json`,
-                    types: [{
-                        description: 'JSON File',
-                        accept: { 'application/json': ['.json'] },
-                    }],
-                });
-                setFileHandle(handle);
-                setCurrentFileName(handle.name.replace('.json', ''));
-                await saveToHandle(handle);
-            } catch (err) {
-                // User cancelled or error
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                }
-            }
-        } else {
-            // Fallback
-            const name = window.prompt('Enter file name:', currentFileName);
-            if (name) {
-                setCurrentFileName(name);
-                downloadFile(name);
-            }
-        }
-    };
-
-    const handleLoad = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Note: Standard file input doesn't give us a FileSystemFileHandle we can write back to easily
-        // without re-prompting. So we just load the data.
-        // To get a handle for loading, we'd need a "Open" button using showOpenFilePicker.
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const data = JSON.parse(event.target.result);
-                loadData(data, file.name);
-                setFileHandle(null); // Reset handle since we loaded a standard file
-                setIsDirty(false); // Reset dirty state after loading new data
-            } catch (err) {
-                alert('Failed to parse JSON');
-            }
-        };
-        reader.readAsText(file);
-        e.target.value = null; // Reset
-    };
-
-    const handleOpen = async () => {
-        if ('showOpenFilePicker' in window) {
-            try {
-                const [handle] = await window.showOpenFilePicker({
-                    types: [{
-                        description: 'JSON File',
-                        accept: { 'application/json': ['.json'] },
-                    }],
-                    multiple: false
-                });
-                const file = await handle.getFile();
-                const text = await file.text();
-                const data = JSON.parse(text);
-                loadData(data, file.name, handle);
-                setIsDirty(false); // Reset dirty state after opening new data
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                    alert('Failed to open file');
-                }
-            }
-        } else {
-            fileInputRef.current?.click();
         }
     };
 
@@ -218,41 +108,16 @@ export default function Controls() {
 
                 <button
                     onClick={handleSave}
-                    disabled={!isDirty}
+                    disabled={!isDirty || isSaving}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${isDirty
                         ? 'text-indigo-600 hover:bg-indigo-50'
                         : 'text-slate-400'
                         }`}
-                    title={isDirty ? `Save as ${currentFileName}.json` : 'No changes to save'}
+                    title={isDirty ? `Save changes` : 'No changes to save'}
                 >
-                    <Save size={18} />
+                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                     Save
                 </button>
-
-                <button
-                    onClick={handleSaveAs}
-                    className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium"
-                    title="Save As..."
-                >
-                    <Download size={18} />
-                    Save As
-                </button>
-
-                <button
-                    onClick={handleOpen}
-                    className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium"
-                    title="Load from JSON"
-                >
-                    <Upload size={18} />
-                    Load
-                </button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleLoad}
-                    accept=".json"
-                    className="hidden"
-                />
             </div>
 
             {user && (
