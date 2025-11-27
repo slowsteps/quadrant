@@ -85,14 +85,14 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             onChange={(e) => setEditName(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Product Name"
-                            className="w-full text-sm font-medium text-slate-800 bg-white/50 border border-black/10 rounded px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full text-sm font-medium text-slate-800 bg-white border-none shadow-sm rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                         />
                         <input
                             value={editLogoUrl}
                             onChange={(e) => setEditLogoUrl(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Logo URL (optional)"
-                            className="w-full text-xs text-slate-600 bg-white/50 border border-black/10 rounded px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full text-xs text-slate-600 bg-white border-none shadow-sm rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                         />
                         <div className="flex flex-wrap gap-1 justify-center">
                             {colors.map((c, i) => (

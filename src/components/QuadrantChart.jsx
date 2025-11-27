@@ -6,7 +6,7 @@ import ProductCard from './ProductCard';
 export default function QuadrantChart() {
     const {
         axes, products, updateProductAxisValues,
-        activeXAxisId, activeYAxisId
+        activeXAxisId, activeYAxisId, activePage
     } = useApp();
 
     const containerRef = useRef(null);
@@ -96,15 +96,18 @@ export default function QuadrantChart() {
     if (!xAxis || !yAxis) return <div>Please select axes</div>;
 
     return (
-        <div className="w-full h-[75vh] flex flex-col relative bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div
+            className="w-full h-[75vh] flex flex-col relative rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-colors duration-300"
+            style={{ backgroundColor: activePage?.backgroundColor || '#ffffff' }}
+        >
             {/* Top Label (Y Axis Max) */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 py-1 rounded backdrop-blur z-10">
-                {yAxis.label} - {yAxis.rightLabel}
+                {axes.find(a => a.id === activeYAxisId)?.label} - {axes.find(a => a.id === activeYAxisId)?.rightLabel}
             </div>
 
             {/* Bottom Label (Y Axis Min) */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 py-1 rounded backdrop-blur z-10">
-                {yAxis.label} - {yAxis.leftLabel}
+                {axes.find(a => a.id === activeYAxisId)?.label} - {axes.find(a => a.id === activeYAxisId)?.leftLabel}
             </div>
 
             {/* Left Label (X Axis Min) */}

@@ -18,12 +18,22 @@ const initialProducts = [
 export function AppProvider({ children }) {
     const [axes, setAxes] = useState(initialAxes);
     const [products, setProducts] = useState(initialProducts);
-    const [activeXAxisId, setActiveXAxisId] = useState('price');
-    const [activeYAxisId, setActiveYAxisId] = useState('quality');
+
+    // Page management
+    const [pages, setPages] = useState([
+        { id: 'default', title: 'Page 1', xAxisId: 'price', yAxisId: 'quality', backgroundColor: '#f8fafc' }
+    ]);
+    const [activePageId, setActivePageId] = useState('default');
+
     const [currentFileName, setCurrentFileName] = useState('quadrant-data');
     const [fileHandle, setFileHandle] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
     const { user } = useAuth();
+
+    // Derived state
+    const activePage = pages.find(p => p.id === activePageId) || pages[0];
+    const activeXAxisId = activePage?.xAxisId || (axes[0]?.id);
+    const activeYAxisId = activePage?.yAxisId || (axes[1]?.id);
 
     const generateId = () => {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -32,6 +42,36 @@ export function AppProvider({ children }) {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     };
 
+    // Page Actions
+    const addPage = () => {
+        const newPage = {
+            id: generateId(),
+            title: `Page ${pages.length + 1}`,
+            xAxisId: axes[0]?.id,
+            yAxisId: axes[1]?.id,
+            backgroundColor: '#f8fafc'
+        };
+        setPages([...pages, newPage]);
+        setActivePageId(newPage.id);
+        setIsDirty(true);
+    };
+
+    const updatePage = (id, updates) => {
+        setPages(pages.map(p => p.id === id ? { ...p, ...updates } : p));
+        setIsDirty(true);
+    };
+
+    const deletePage = (id) => {
+        if (pages.length <= 1) return; // Prevent deleting last page
+        const newPages = pages.filter(p => p.id !== id);
+        setPages(newPages);
+        if (activePageId === id) {
+            setActivePageId(newPages[0].id);
+        }
+        setIsDirty(true);
+    };
+
+    // Axis Actions
     const addAxis = (axis) => {
         const newAxisId = generateId();
         const newAxis = { ...axis, id: newAxisId };
@@ -48,29 +88,35 @@ export function AppProvider({ children }) {
         setAxes([...axes, newAxis]);
         setIsDirty(true);
     };
+
     const updateAxis = (id, updates) => {
         setAxes(axes.map(a => a.id === id ? { ...a, ...updates } : a));
         setIsDirty(true);
     };
+
     const deleteAxis = (id) => {
         const newAxes = axes.filter(a => a.id !== id);
         setAxes(newAxes);
         setIsDirty(true);
 
-        // If we deleted an active axis, switch to the first available one
-        if (activeXAxisId === id && newAxes.length > 0) {
-            setActiveXAxisId(newAxes[0].id);
-        }
-        if (activeYAxisId === id && newAxes.length > 0) {
-            setActiveYAxisId(newAxes[0].id);
+        // Update pages that were using this axis
+        const updatedPages = pages.map(p => {
+            let updates = {};
+            if (p.xAxisId === id) updates.xAxisId = newAxes[0]?.id;
+            if (p.yAxisId === id) updates.yAxisId = newAxes[0]?.id;
+            return Object.keys(updates).length > 0 ? { ...p, ...updates } : p;
+        });
+
+        if (JSON.stringify(updatedPages) !== JSON.stringify(pages)) {
+            setPages(updatedPages);
         }
     };
 
+    // Product Actions
     const addProduct = (name) => {
-        // Initialize with default values for all existing axes
         const defaultAxisValues = {};
         axes.forEach(axis => {
-            defaultAxisValues[axis.id] = 50;  // Default to center
+            defaultAxisValues[axis.id] = 50;
         });
 
         setProducts([...products, {
@@ -106,11 +152,28 @@ export function AppProvider({ children }) {
         setIsDirty(true);
     };
 
+    // Persistence
     const loadData = (data, fileName, handle = null) => {
         if (data.axes) setAxes(data.axes);
         if (data.products) setProducts(data.products);
-        if (data.activeXAxisId) setActiveXAxisId(data.activeXAxisId);
-        if (data.activeYAxisId) setActiveYAxisId(data.activeYAxisId);
+
+        // Handle legacy data format (no pages)
+        if (data.pages) {
+            setPages(data.pages);
+            setActivePageId(data.pages[0]?.id || 'default');
+        } else {
+            // Convert legacy state to single page
+            const initialPage = {
+                id: 'default',
+                title: 'Page 1',
+                xAxisId: data.activeXAxisId || axes[0]?.id,
+                yAxisId: data.activeYAxisId || axes[1]?.id,
+                backgroundColor: '#f8fafc'
+            };
+            setPages([initialPage]);
+            setActivePageId('default');
+        }
+
         if (fileName) setCurrentFileName(fileName.replace('.json', ''));
         if (handle) setFileHandle(handle);
         setIsDirty(false);
@@ -120,18 +183,15 @@ export function AppProvider({ children }) {
         setCurrentFileName(name);
         setIsDirty(true);
     };
+
     const saveToCloud = async () => {
         if (!user) throw new Error('User not authenticated');
 
-        const data = { axes, products, activeXAxisId, activeYAxisId };
-
-        // Check if we already have a cloud ID for this file (we might need to store it)
-        // For now, let's just use the currentFileName as the name and upsert based on name + user_id?
-        // Or better, let's query to see if a quadrant with this name exists for this user.
-
-        // Simple approach: Upsert based on an ID if we have one, or create new.
-        // But we don't have a cloud ID in state yet.
-        // Let's try to find by name first.
+        const data = {
+            axes,
+            products,
+            pages // Save pages structure
+        };
 
         const { data: existing } = await supabase
             .from('quadrants')
@@ -185,15 +245,20 @@ export function AppProvider({ children }) {
             loadData(data.data, data.name);
         }
     };
+
+    // Compatibility setters for Controls component
+    const setActiveXAxisId = (id) => updatePage(activePageId, { xAxisId: id });
+    const setActiveYAxisId = (id) => updatePage(activePageId, { yAxisId: id });
+
     return (
         <AppContext.Provider value={{
             axes, addAxis, updateAxis, deleteAxis,
             products, addProduct, updateProduct, updateProductAxisValues, deleteProduct,
+            pages, activePageId, activePage, addPage, updatePage, deletePage, setActivePageId,
             activeXAxisId, setActiveXAxisId,
             activeYAxisId, setActiveYAxisId,
             loadData,
             currentFileName, setCurrentFileName, updateFileName,
-            fileHandle, setFileHandle,
             fileHandle, setFileHandle,
             isDirty, setIsDirty,
             saveToCloud, fetchQuadrants, loadQuadrant
