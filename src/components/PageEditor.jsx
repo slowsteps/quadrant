@@ -86,14 +86,19 @@ function PageItem({ page, isActive, setActivePageId, updatePage, deletePage, axe
                 onClick={() => setActivePageId(page.id)}
                 className="p-3 flex items-center justify-between cursor-pointer"
             >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
                     <div
-                        className="w-4 h-4 rounded-full border border-slate-300 shadow-sm"
+                        className="w-4 h-4 rounded-full border border-slate-300 shadow-sm flex-shrink-0"
                         style={{ backgroundColor: page.backgroundColor }}
                     />
-                    <span className={`font-medium text-sm ${isActive ? 'text-indigo-900' : 'text-slate-700'}`}>
-                        {page.title}
-                    </span>
+                    <input
+                        type="text"
+                        value={page.title}
+                        onChange={(e) => updatePage(page.id, { title: e.target.value })}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`font-medium text-sm bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:bg-white transition-all ${isActive ? 'text-indigo-900' : 'text-slate-700'}`}
+                        placeholder="Page Title"
+                    />
                 </div>
 
                 <button
@@ -102,7 +107,7 @@ function PageItem({ page, isActive, setActivePageId, updatePage, deletePage, axe
                         setIsEditing(!isEditing);
                     }}
                     className={`
-                        p-1.5 rounded-md transition-colors ml-2
+                        p-1.5 rounded-md transition-colors ml-2 flex-shrink-0
                         ${isEditing
                             ? 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'
                             : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
@@ -117,48 +122,34 @@ function PageItem({ page, isActive, setActivePageId, updatePage, deletePage, axe
                 <div className="px-3 pb-3 pt-0 space-y-3 animate-in slide-in-from-top-2 duration-200 cursor-default" onClick={e => e.stopPropagation()}>
                     <div className="h-px bg-indigo-100 mb-3" />
 
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Title</label>
-                        <input
-                            type="text"
-                            value={page.title}
-                            onChange={(e) => updatePage(page.id, { title: e.target.value })}
-                            className="font-medium text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:border-slate-300"
-                            placeholder="Page Title"
-                            autoFocus
-                        />
-                    </div>
+                    <div className="flex flex-col gap-2 items-center w-full">
+                        <select
+                            value={page.xAxisId}
+                            onChange={(e) => updatePage(page.id, { xAxisId: e.target.value })}
+                            className="w-full rounded-md border border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-center py-2 shadow-sm cursor-pointer hover:border-indigo-300 transition-colors appearance-none"
+                            style={{ textAlignLast: 'center' }}
+                        >
+                            {axes.filter(a => a.id !== page.yAxisId).map(axis => (
+                                <option key={axis.id} value={axis.id} className="text-center py-1">{axis.label}</option>
+                            ))}
+                        </select>
 
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">X Axis</label>
-                            <select
-                                value={page.xAxisId}
-                                onChange={(e) => updatePage(page.id, { xAxisId: e.target.value })}
-                                className="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                                {axes.filter(a => a.id !== page.yAxisId).map(axis => (
-                                    <option key={axis.id} value={axis.id}>{axis.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Y Axis</label>
-                            <select
-                                value={page.yAxisId}
-                                onChange={(e) => updatePage(page.id, { yAxisId: e.target.value })}
-                                className="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                                {axes.filter(a => a.id !== page.xAxisId).map(axis => (
-                                    <option key={axis.id} value={axis.id}>{axis.label}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <span className="text-xs font-medium text-slate-400 italic">vs</span>
+
+                        <select
+                            value={page.yAxisId}
+                            onChange={(e) => updatePage(page.id, { yAxisId: e.target.value })}
+                            className="w-full rounded-md border border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-center py-2 shadow-sm cursor-pointer hover:border-indigo-300 transition-colors appearance-none"
+                            style={{ textAlignLast: 'center' }}
+                        >
+                            {axes.filter(a => a.id !== page.xAxisId).map(axis => (
+                                <option key={axis.id} value={axis.id} className="text-center py-1">{axis.label}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Background</label>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 justify-center mt-2">
                             {colors.map(color => (
                                 <button
                                     key={color}

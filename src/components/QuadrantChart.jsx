@@ -6,7 +6,7 @@ import ProductCard from './ProductCard';
 export default function QuadrantChart() {
     const {
         axes, products, updateProductAxisValues,
-        activeXAxisId, activeYAxisId, activePage
+        activeXAxisId, activeYAxisId, activePage, updatePage
     } = useApp();
 
     const containerRef = useRef(null);
@@ -101,23 +101,50 @@ export default function QuadrantChart() {
             style={{ backgroundColor: activePage?.backgroundColor || '#ffffff' }}
         >
             {/* Top Label (Y Axis Max) */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 py-1 rounded backdrop-blur z-10">
-                {axes.find(a => a.id === activeYAxisId)?.label} - {axes.find(a => a.id === activeYAxisId)?.rightLabel}
-            </div>
+            <AxisDropdown
+                key={`top-${activeYAxisId}`}
+                currentAxisId={activeYAxisId}
+                axes={axes}
+                onSelect={(id) => updatePage(activePage.id, { yAxisId: id })}
+                suffix={` - ${axes.find(a => a.id === activeYAxisId)?.rightLabel}`}
+                backgroundColor={activePage?.backgroundColor || '#ffffff'}
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
+            />
 
-            {/* Bottom Label (Y Axis Min) */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 py-1 rounded backdrop-blur z-10">
-                {axes.find(a => a.id === activeYAxisId)?.label} - {axes.find(a => a.id === activeYAxisId)?.leftLabel}
+            {/* Bottom Label (Y Axis Min) - Static, no dropdown */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                <div
+                    className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 py-1 rounded backdrop-blur whitespace-nowrap"
+                    style={{ backgroundColor: `${activePage?.backgroundColor || '#ffffff'}cc` }}
+                >
+                    {axes.find(a => a.id === activeYAxisId)?.label} - {axes.find(a => a.id === activeYAxisId)?.leftLabel}
+                </div>
             </div>
 
             {/* Left Label (X Axis Min) */}
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 py-1 rounded backdrop-blur z-10 origin-center">
-                {xAxis.label} - {xAxis.leftLabel}
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+                <AxisDropdown
+                    key={`left-${activeXAxisId}`}
+                    currentAxisId={activeXAxisId}
+                    axes={axes}
+                    onSelect={(id) => updatePage(activePage.id, { xAxisId: id })}
+                    suffix={` - ${xAxis.leftLabel}`}
+                    backgroundColor={activePage?.backgroundColor || '#ffffff'}
+                    rotated={true}
+                />
             </div>
 
             {/* Right Label (X Axis Max) */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 px-2 py-1 rounded backdrop-blur z-10 origin-center">
-                {xAxis.label} - {xAxis.rightLabel}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+                <AxisDropdown
+                    key={`right-${activeXAxisId}`}
+                    currentAxisId={activeXAxisId}
+                    axes={axes}
+                    onSelect={(id) => updatePage(activePage.id, { xAxisId: id })}
+                    suffix={` - ${xAxis.rightLabel}`}
+                    backgroundColor={activePage?.backgroundColor || '#ffffff'}
+                    rotated={true}
+                />
             </div>
 
             {/* Grid Background */}
@@ -170,6 +197,41 @@ export default function QuadrantChart() {
                         />
                     );
                 })}
+            </div>
+        </div>
+    );
+}
+
+function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', backgroundColor = '#ffffff', rotated = false }) {
+    const currentAxis = axes.find(a => a.id === currentAxisId);
+
+    return (
+        <div className={`group ${className}`} style={{ display: 'inline-block' }}>
+            {/* Display Label */}
+            <div
+                className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 py-1 rounded backdrop-blur cursor-pointer group-hover:shadow-sm group-hover:text-indigo-600 transition-all border border-transparent group-hover:border-indigo-100 whitespace-nowrap"
+                style={{ backgroundColor: `${backgroundColor}cc` }}
+            >
+                {currentAxis?.label}{suffix}
+            </div>
+
+            {/* Dropdown Menu */}
+            <div
+                className={`absolute ${rotated ? 'top-1/2 left-full ml-2 -translate-y-1/2 rotate-90 origin-left' : 'top-full left-1/2 -translate-x-1/2 mt-1'} w-48 rounded-lg shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}
+                style={{ backgroundColor }}
+            >
+                <div className="max-h-60 overflow-y-auto py-1">
+                    {axes.map(axis => (
+                        <button
+                            key={axis.id}
+                            onClick={() => onSelect(axis.id)}
+                            className={`w-full text-center px-3 py-2 text-xs font-medium hover:bg-indigo-50 transition-colors ${axis.id === currentAxisId ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-600'
+                                }`}
+                        >
+                            {axis.label}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     );
