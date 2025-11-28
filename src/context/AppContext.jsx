@@ -113,7 +113,7 @@ export function AppProvider({ children }) {
     };
 
     // Product Actions
-    const addProduct = (name) => {
+    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null) => {
         const defaultAxisValues = {};
         axes.forEach(axis => {
             defaultAxisValues[axis.id] = 50;
@@ -123,7 +123,9 @@ export function AppProvider({ children }) {
             id: generateId(),
             name,
             color: 'bg-white border-slate-200',
-            axisValues: defaultAxisValues
+            logoUrl: logoUrl || '',
+            reasoning: reasoning || null,
+            axisValues: axisValues || defaultAxisValues
         }]);
         setIsDirty(true);
     };

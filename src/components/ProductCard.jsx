@@ -149,6 +149,31 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                         </button>
                     </div>
                 )}
+
+                {/* AI Reasoning Tooltip */}
+                {product.reasoning && !isEditing && (
+                    <div className="absolute -bottom-2 -right-2 z-30">
+                        <div className="group/info relative">
+                            <div className="w-4 h-4 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold border border-indigo-200 cursor-help shadow-sm">
+                                i
+                            </div>
+                            <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none">
+                                {product.reasoning}
+                                <div className="mt-2 pt-2 border-t border-slate-700 flex flex-col gap-0.5 text-[10px] text-slate-300">
+                                    <div className="flex justify-between">
+                                        <span>{useApp().axes.find(a => a.id === activeXAxisId)?.label}:</span>
+                                        <span className="font-mono">{Math.round(product.axisValues[activeXAxisId] || 50)}%</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>{useApp().axes.find(a => a.id === activeYAxisId)?.label}:</span>
+                                        <span className="font-mono">{Math.round(product.axisValues[activeYAxisId] || 50)}%</span>
+                                    </div>
+                                </div>
+                                <div className="absolute top-full right-1 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </motion.div>
     );
