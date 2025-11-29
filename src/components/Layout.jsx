@@ -211,11 +211,11 @@ function LayoutContent() {
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${isDirty
                                     ? 'text-indigo-600 hover:bg-indigo-50'
                                     : 'text-slate-400'
-                                    }`}
+                                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={isDirty ? `Save changes` : 'No changes to save'}
                             >
                                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                Save
+                                {isSaving ? 'Saving...' : 'Save'}
                             </button>
 
                             <div className="relative" ref={recentRef}>

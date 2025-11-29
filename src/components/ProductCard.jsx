@@ -33,9 +33,22 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
     const handleSaveName = () => {
         if (editName.trim()) {
+            let logoToSave = editLogoUrl.trim();
+
+            // Auto-fetch logo if URL is empty
+            if (!logoToSave && editName.trim()) {
+                // Simple heuristic: try to guess domain from name
+                // Remove spaces and special chars, assume .com if no dot
+                let domain = editName.trim().toLowerCase().replace(/[^a-z0-9.]/g, '');
+                if (!domain.includes('.')) {
+                    domain += '.com';
+                }
+                logoToSave = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+            }
+
             updateProduct(product.id, {
                 name: editName.trim(),
-                logoUrl: editLogoUrl.trim()
+                logoUrl: logoToSave
             });
         } else {
             setEditName(product.name);

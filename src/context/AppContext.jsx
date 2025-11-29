@@ -263,6 +263,26 @@ export function AppProvider({ children }) {
     const setActiveXAxisId = (id) => updatePage(activePageId, { xAxisId: id });
     const setActiveYAxisId = (id) => updatePage(activePageId, { yAxisId: id });
 
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Auto-save logic
+    useEffect(() => {
+        if (!isDirty || !user) return;
+
+        const timeoutId = setTimeout(async () => {
+            try {
+                setIsSaving(true);
+                await saveToCloud();
+            } catch (err) {
+                console.error("Auto-save failed:", err);
+            } finally {
+                setIsSaving(false);
+            }
+        }, 2000); // Debounce for 2 seconds
+
+        return () => clearTimeout(timeoutId);
+    }, [isDirty, user, axes, products, pages, currentFileName]); // Dependencies that trigger save
+
     return (
         <AppContext.Provider value={{
             axes, addAxis, updateAxis, deleteAxis,
@@ -273,7 +293,7 @@ export function AppProvider({ children }) {
             loadData, newProject,
             currentFileName, setCurrentFileName, updateFileName,
             fileHandle, setFileHandle,
-            isDirty, setIsDirty,
+            isDirty, setIsDirty, isSaving, // Expose isSaving
             saveToCloud, fetchQuadrants, loadQuadrant
         }}>
             {children}
