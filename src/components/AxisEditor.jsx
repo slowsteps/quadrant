@@ -98,7 +98,16 @@ export default function AxisEditor({ onClose }) {
 
 function AxisItem({ axis, updateAxis, deleteAxis }) {
     const [isEditing, setIsEditing] = useState(false);
-    const [edited, setEdited] = useState(axis);
+    // We use local state to track changes before saving?
+    // User said: "Make every click outside update the state."
+    // This implies we can edit directly on the object or use local state and save on blur.
+    // Given the previous pattern was direct update for title, let's try to make it consistent.
+    // However, for "click outside update state", it usually means "commit".
+    // If we update `axis` directly via `updateAxis` on every keystroke, then "click outside" doesn't need to do anything special.
+    // But maybe the user wants to cancel? No, "Make every click outside update the state" implies commit.
+    // So live updates are fine.
+    // BUT, the expand/collapse logic is key.
+
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -116,96 +125,113 @@ function AxisItem({ axis, updateAxis, deleteAxis }) {
         };
     }, [isEditing]);
 
-    const handleSave = () => {
-        updateAxis(axis.id, edited);
-        setIsEditing(false);
-    };
-
     return (
         <div
             ref={containerRef}
             className={`
                 rounded-lg border transition-all duration-200
                 ${isEditing
-                    ? 'bg-slate-50 border-indigo-200 shadow-sm'
+                    ? 'bg-white border-indigo-200 shadow-sm'
                     : 'bg-white border-slate-200 hover:border-indigo-200'
                 }
             `}
         >
-            <div className="p-3 flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-800 text-sm truncate">{axis.label}</div>
-                    <div className="text-xs text-slate-500 truncate">
-                        {axis.leftLabel} <span className="text-slate-300 mx-1">vs</span> {axis.rightLabel}
-                    </div>
-                </div>
+            <div className="p-3">
+                <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                        <input
+                            type="text"
+                            value={axis.label}
+                            onChange={(e) => updateAxis(axis.id, { ...axis, label: e.target.value })}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsEditing(true);
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    e.target.blur();
+                                }
+                            }}
+                            className="font-bold text-slate-800 text-sm bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:bg-white transition-all mb-1"
+                            placeholder="Axis Name"
+                        />
 
-                <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className={`
-                        p-1.5 rounded-md transition-colors ml-2
-                        ${isEditing
-                            ? 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'
-                            : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
-                        }
-                    `}
-                >
-                    {isEditing ? <X size={18} /> : <Pencil size={18} />}
-                </button>
-            </div>
-
-            {isEditing && (
-                <div className="px-3 pb-3 pt-0 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                    <div className="h-px bg-indigo-100 mb-3" />
-
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
-                            <input
-                                type="text"
-                                value={edited.label}
-                                onChange={(e) => setEdited({ ...edited, label: e.target.value })}
-                                className="font-medium text-slate-700 bg-white border border-slate-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:border-slate-300"
-                                placeholder="Axis Label"
-                                autoFocus
-                            />
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                <input
-                                    type="text"
-                                    value={edited.leftLabel}
-                                    onChange={(e) => setEdited({ ...edited, leftLabel: e.target.value })}
-                                    className="text-xs text-slate-500 bg-white border border-slate-200 rounded px-2 py-1 w-full focus:outline-none focus:border-slate-300"
-                                    placeholder="Min Label"
-                                />
-                                <input
-                                    type="text"
-                                    value={edited.rightLabel}
-                                    onChange={(e) => setEdited({ ...edited, rightLabel: e.target.value })}
-                                    className="text-xs text-slate-500 bg-white border border-slate-200 rounded px-2 py-1 w-full focus:outline-none focus:border-slate-300 text-right"
-                                    placeholder="Max Label"
-                                />
+                        {/* Collapsed View: Summary - Hidden as requested */}
+                        {!isEditing && (
+                            <div
+                                className="h-4" // Spacer to keep some height if needed, or just remove. Let's keep it minimal.
+                                onClick={() => setIsEditing(true)}
+                            >
                             </div>
-                        </div>
+                        )}
+
+                        {/* Expanded View: Inline Inputs */}
+                        {isEditing && (
+                            <div className="mt-2 space-y-2 px-1.5 animate-in slide-in-from-top-1 duration-200">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">From</label>
+                                    <input
+                                        type="text"
+                                        value={axis.leftLabel}
+                                        onChange={(e) => updateAxis(axis.id, { ...axis, leftLabel: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                e.target.blur();
+                                            }
+                                        }}
+                                        className="w-full text-sm text-slate-700 bg-white border border-transparent hover:border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                                        placeholder="Min Label"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
+                                    <input
+                                        type="text"
+                                        value={axis.rightLabel}
+                                        onChange={(e) => updateAxis(axis.id, { ...axis, rightLabel: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                e.target.blur();
+                                            }
+                                        }}
+                                        className="w-full text-sm text-slate-700 bg-white border border-transparent hover:border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                                        placeholder="Max Label"
+                                    />
+                                </div>
+
+                                <div className="pt-2 flex justify-between items-center">
+                                    <button
+                                        onClick={() => deleteAxis(axis.id)}
+                                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                                    >
+                                        <Trash2 size={14} />
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-2">
-                        <button
-                            onClick={() => deleteAxis(axis.id)}
-                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                        >
-                            <Trash2 size={14} />
-                            Delete
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-xs font-medium"
-                        >
-                            <Save size={14} />
-                            Save
-                        </button>
-                    </div>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditing(!isEditing);
+                        }}
+                        className={`
+                            p-1.5 rounded-md transition-colors ml-2 flex-shrink-0
+                            ${isEditing
+                                ? 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'
+                                : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                            }
+                        `}
+                    >
+                        {isEditing ? <X size={18} /> : <Pencil size={18} />}
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

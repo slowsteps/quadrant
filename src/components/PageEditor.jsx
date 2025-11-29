@@ -87,16 +87,12 @@ function PageItem({ page, isActive, setActivePageId, updatePage, deletePage, axe
                 className="p-3 flex items-center justify-between cursor-pointer"
             >
                 <div className="flex items-center gap-3 flex-1">
-                    <div
-                        className="w-4 h-4 rounded-full border border-slate-300 shadow-sm flex-shrink-0"
-                        style={{ backgroundColor: page.backgroundColor }}
-                    />
                     <input
                         type="text"
                         value={page.title}
                         onChange={(e) => updatePage(page.id, { title: e.target.value })}
                         onClick={(e) => e.stopPropagation()}
-                        className={`font-medium text-sm bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:bg-white transition-all ${isActive ? 'text-indigo-900' : 'text-slate-700'}`}
+                        className={`font-bold text-sm bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:bg-white transition-all ${isActive ? 'text-indigo-900' : 'text-slate-800'}`}
                         placeholder="Page Title"
                     />
                 </div>
@@ -122,30 +118,40 @@ function PageItem({ page, isActive, setActivePageId, updatePage, deletePage, axe
                 <div className="px-3 pb-3 pt-0 space-y-3 animate-in slide-in-from-top-2 duration-200 cursor-default" onClick={e => e.stopPropagation()}>
                     <div className="h-px bg-indigo-100 mb-3" />
 
-                    <div className="flex flex-col gap-2 items-center w-full">
-                        <select
-                            value={page.xAxisId}
-                            onChange={(e) => updatePage(page.id, { xAxisId: e.target.value })}
-                            className="w-full rounded-md border border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-center py-2 shadow-sm cursor-pointer hover:border-indigo-300 transition-colors appearance-none"
-                            style={{ textAlignLast: 'center' }}
-                        >
-                            {axes.filter(a => a.id !== page.yAxisId).map(axis => (
-                                <option key={axis.id} value={axis.id} className="text-center py-1">{axis.label}</option>
-                            ))}
-                        </select>
+                    <div className="flex flex-col gap-3 items-center w-full">
+                        <div className="w-full relative">
+                            <select
+                                value={page.xAxisId}
+                                onChange={(e) => updatePage(page.id, { xAxisId: e.target.value })}
+                                className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 hover:border-indigo-300 transition-colors text-center cursor-pointer"
+                                style={{ textAlignLast: 'center' }}
+                            >
+                                {axes.filter(a => a.id !== page.yAxisId).map(axis => (
+                                    <option key={axis.id} value={axis.id}>{axis.label}</option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                            </div>
+                        </div>
 
-                        <span className="text-xs font-medium text-slate-400 italic">vs</span>
+                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">vs</span>
 
-                        <select
-                            value={page.yAxisId}
-                            onChange={(e) => updatePage(page.id, { yAxisId: e.target.value })}
-                            className="w-full rounded-md border border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-center py-2 shadow-sm cursor-pointer hover:border-indigo-300 transition-colors appearance-none"
-                            style={{ textAlignLast: 'center' }}
-                        >
-                            {axes.filter(a => a.id !== page.xAxisId).map(axis => (
-                                <option key={axis.id} value={axis.id} className="text-center py-1">{axis.label}</option>
-                            ))}
-                        </select>
+                        <div className="w-full relative">
+                            <select
+                                value={page.yAxisId}
+                                onChange={(e) => updatePage(page.id, { yAxisId: e.target.value })}
+                                className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 hover:border-indigo-300 transition-colors text-center cursor-pointer"
+                                style={{ textAlignLast: 'center' }}
+                            >
+                                {axes.filter(a => a.id !== page.xAxisId).map(axis => (
+                                    <option key={axis.id} value={axis.id}>{axis.label}</option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                            </div>
+                        </div>
                     </div>
 
                     <div>

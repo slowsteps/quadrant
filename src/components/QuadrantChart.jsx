@@ -109,6 +109,7 @@ export default function QuadrantChart() {
                 suffix={` - ${axes.find(a => a.id === activeYAxisId)?.rightLabel}`}
                 backgroundColor={activePage?.backgroundColor || '#ffffff'}
                 className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
+                placement="bottom"
             />
 
             {/* Bottom Label (Y Axis Min) - Static, no dropdown */}
@@ -130,7 +131,7 @@ export default function QuadrantChart() {
                     onSelect={(id) => updatePage(activePage.id, { xAxisId: id })}
                     suffix={` - ${xAxis.leftLabel}`}
                     backgroundColor={activePage?.backgroundColor || '#ffffff'}
-                    rotated={true}
+                    placement="right"
                 />
             </div>
 
@@ -143,7 +144,7 @@ export default function QuadrantChart() {
                     onSelect={(id) => updatePage(activePage.id, { xAxisId: id })}
                     suffix={` - ${xAxis.rightLabel}`}
                     backgroundColor={activePage?.backgroundColor || '#ffffff'}
-                    rotated={true}
+                    placement="left"
                 />
             </div>
 
@@ -202,8 +203,19 @@ export default function QuadrantChart() {
     );
 }
 
-function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', backgroundColor = '#ffffff', rotated = false }) {
+function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', backgroundColor = '#ffffff', placement = 'bottom' }) {
     const currentAxis = axes.find(a => a.id === currentAxisId);
+
+    let dropdownClasses = "absolute w-48 rounded-lg shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50";
+
+    if (placement === 'right') {
+        dropdownClasses += " top-1/2 left-full ml-2 -translate-y-1/2";
+    } else if (placement === 'left') {
+        dropdownClasses += " top-1/2 right-full mr-2 -translate-y-1/2";
+    } else {
+        // bottom
+        dropdownClasses += " top-full left-1/2 -translate-x-1/2 mt-1";
+    }
 
     return (
         <div className={`group ${className}`} style={{ display: 'inline-block' }}>
@@ -217,7 +229,7 @@ function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', b
 
             {/* Dropdown Menu */}
             <div
-                className={`absolute ${rotated ? 'top-1/2 left-full ml-2 -translate-y-1/2 rotate-90 origin-left' : 'top-full left-1/2 -translate-x-1/2 mt-1'} w-48 rounded-lg shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50`}
+                className={dropdownClasses}
                 style={{ backgroundColor }}
             >
                 <div className="max-h-60 overflow-y-auto py-1">
