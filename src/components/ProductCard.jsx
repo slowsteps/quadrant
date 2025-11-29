@@ -71,8 +71,14 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 isDragging.current = false;
                 onDragEnd(e, info);
             }}
-            animate={{ x, y }}
-            transition={{ duration: 0 }}
+            initial={{ opacity: 0, scale: 0.9, x, y }}
+            animate={{ opacity: 1, scale: 1, x, y }}
+            transition={{
+                x: { duration: 0 }, // Instant for drag responsiveness
+                y: { duration: 0 },
+                opacity: { duration: 0.3, ease: "easeOut" },
+                scale: { duration: 0.3, type: "spring", stiffness: 200, damping: 20 }
+            }}
             style={{ touchAction: 'none' }}
             className="absolute top-0 left-0 cursor-grab active:cursor-grabbing group z-10 hover:z-20"
         >

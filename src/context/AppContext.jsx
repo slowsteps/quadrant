@@ -25,7 +25,7 @@ export function AppProvider({ children }) {
     ]);
     const [activePageId, setActivePageId] = useState('default');
 
-    const [currentFileName, setCurrentFileName] = useState('quadrant-data');
+    const [currentFileName, setCurrentFileName] = useState('Untitled project');
     const [fileHandle, setFileHandle] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
     const { user } = useAuth();
@@ -40,6 +40,17 @@ export function AppProvider({ children }) {
             return crypto.randomUUID();
         }
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    };
+
+    // Project Actions
+    const newProject = () => {
+        setAxes(initialAxes);
+        setProducts(initialProducts);
+        setPages([{ id: 'default', title: 'Page 1', xAxisId: 'price', yAxisId: 'quality', backgroundColor: '#f8fafc' }]);
+        setActivePageId('default');
+        setCurrentFileName('Untitled project');
+        setFileHandle(null);
+        setIsDirty(false);
     };
 
     // Page Actions
@@ -259,7 +270,7 @@ export function AppProvider({ children }) {
             pages, activePageId, activePage, addPage, updatePage, deletePage, setActivePageId,
             activeXAxisId, setActiveXAxisId,
             activeYAxisId, setActiveYAxisId,
-            loadData,
+            loadData, newProject,
             currentFileName, setCurrentFileName, updateFileName,
             fileHandle, setFileHandle,
             isDirty, setIsDirty,

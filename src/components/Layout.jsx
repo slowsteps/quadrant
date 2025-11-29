@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown } from 'lucide-react';
+import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown, FilePlus } from 'lucide-react';
 import QuadrantChart from './QuadrantChart';
 import AxisEditor from './AxisEditor';
 import PageEditor from './PageEditor';
@@ -12,7 +12,7 @@ function LayoutContent() {
     const {
         currentFileName, updateFileName,
         pages, activePageId, setActivePageId,
-        isDirty, saveToCloud, fetchQuadrants, loadQuadrant,
+        isDirty, saveToCloud, fetchQuadrants, loadQuadrant, newProject,
         axes, activeXAxisId, activeYAxisId
     } = useApp();
     const { user, signInWithGoogle, signOut } = useAuth();
@@ -22,10 +22,31 @@ function LayoutContent() {
     const [cloudFiles, setCloudFiles] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const recentRef = useRef(null);
+    const [hasAutoLoaded, setHasAutoLoaded] = useState(false);
 
     // Page Menu State
     const [isPageMenuOpen, setIsPageMenuOpen] = useState(false);
     const pageMenuRef = useRef(null);
+
+    // Auto-load most recent project on sign-in
+    useEffect(() => {
+        const autoLoad = async () => {
+            if (user && !hasAutoLoaded) {
+                try {
+                    const files = await fetchQuadrants();
+                    if (files.length > 0) {
+                        await loadQuadrant(files[0].id);
+                        console.log('Auto-loaded most recent project:', files[0].name);
+                    }
+                } catch (err) {
+                    console.error('Failed to auto-load project:', err);
+                } finally {
+                    setHasAutoLoaded(true);
+                }
+            }
+        };
+        autoLoad();
+    }, [user, hasAutoLoaded, fetchQuadrants, loadQuadrant]);
 
     // Handle click outside for Recent
     useEffect(() => {
@@ -158,10 +179,7 @@ function LayoutContent() {
                                             ${page.id === activePageId ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}
                                         `}
                                     >
-                                        <div
-                                            className="w-2.5 h-2.5 rounded-full border border-slate-200 shadow-sm shrink-0"
-                                            style={{ backgroundColor: page.backgroundColor }}
-                                        />
+                                        {/* Removed color swatch as requested */}
                                         <div className="flex-1 truncate font-medium">
                                             {page.title}
                                         </div>
@@ -179,6 +197,14 @@ function LayoutContent() {
                     {/* Save & Recent (Only if logged in) */}
                     {user && (
                         <>
+                            <button
+                                onClick={newProject}
+                                className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium"
+                                title="New Project"
+                            >
+                                <FilePlus size={18} />
+                                New Project
+                            </button>
                             <button
                                 onClick={handleSave}
                                 disabled={!isDirty || isSaving}
