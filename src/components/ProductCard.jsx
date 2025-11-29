@@ -74,8 +74,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             initial={{ opacity: 0, scale: 0.9, x, y }}
             animate={{ opacity: 1, scale: 1, x, y }}
             transition={{
-                x: { duration: 0 }, // Instant for drag responsiveness
-                y: { duration: 0 },
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                y: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.3, ease: "easeOut" },
                 scale: { duration: 0.3, type: "spring", stiffness: 200, damping: 20 }
             }}

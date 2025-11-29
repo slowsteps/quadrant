@@ -108,12 +108,12 @@ export default function QuadrantChart() {
                 onSelect={(id) => updatePage(activePage.id, { yAxisId: id })}
                 suffix={` - ${axes.find(a => a.id === activeYAxisId)?.rightLabel}`}
                 backgroundColor={activePage?.backgroundColor || '#ffffff'}
-                className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
                 placement="bottom"
             />
 
             {/* Bottom Label (Y Axis Min) - Static, no dropdown */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
                 <div
                     className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 py-1 rounded backdrop-blur whitespace-nowrap"
                     style={{ backgroundColor: `${activePage?.backgroundColor || '#ffffff'}cc` }}
@@ -123,7 +123,7 @@ export default function QuadrantChart() {
             </div>
 
             {/* Left Label (X Axis Min) */}
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
                 <AxisDropdown
                     key={`left-${activeXAxisId}`}
                     currentAxisId={activeXAxisId}
@@ -136,7 +136,7 @@ export default function QuadrantChart() {
             </div>
 
             {/* Right Label (X Axis Max) */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
                 <AxisDropdown
                     key={`right-${activeXAxisId}`}
                     currentAxisId={activeXAxisId}
