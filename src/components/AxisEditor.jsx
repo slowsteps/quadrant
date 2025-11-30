@@ -33,35 +33,34 @@ export default function AxisEditor({ onClose }) {
                 ))}
 
                 {isAdding ? (
-                    <div className="bg-slate-50 p-4 rounded-xl border border-indigo-200 shadow-sm animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-white border-indigo-200 shadow-sm rounded-lg border p-3 animate-in fade-in slide-in-from-top-2">
                         <div className="space-y-3 mb-4">
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
                                 <input
                                     value={newAxis.label}
                                     onChange={e => setNewAxis({ ...newAxis, label: e.target.value })}
-                                    placeholder="e.g. Price"
-                                    className="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="Axis Name"
+                                    className="font-bold text-slate-800 text-sm bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:bg-white transition-all mb-1"
                                     autoFocus
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2 px-1.5">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 mb-1">Min Label</label>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">From</label>
                                     <input
                                         value={newAxis.leftLabel}
                                         onChange={e => setNewAxis({ ...newAxis, leftLabel: e.target.value })}
-                                        placeholder="Low"
-                                        className="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Min Label"
+                                        className="w-full text-sm text-slate-700 bg-white border border-transparent hover:border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-500 mb-1">Max Label</label>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
                                     <input
                                         value={newAxis.rightLabel}
                                         onChange={e => setNewAxis({ ...newAxis, rightLabel: e.target.value })}
-                                        placeholder="High"
-                                        className="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Max Label"
+                                        className="w-full text-sm text-slate-700 bg-white border border-transparent hover:border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                                     />
                                 </div>
                             </div>
