@@ -18,6 +18,7 @@ export function useAiSuggestion() {
 
             const openai = new OpenAI({
                 apiKey,
+                baseURL: `${window.location.origin}/api/openai`, // Proxy through Vite to avoid CORS
                 dangerouslyAllowBrowser: true // Note: In production, API calls should go through a backend
             });
 

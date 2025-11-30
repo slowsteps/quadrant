@@ -92,6 +92,19 @@ export default function AxisEditor({ onClose }) {
                     </button>
                 )}
             </div>
+
+            {/* Reset Onboarding (Dev/Admin Tool) */}
+            <div className="mt-8 pt-6 border-t border-slate-100">
+                <button
+                    onClick={() => {
+                        localStorage.removeItem('hasSeenOnboarding');
+                        window.location.reload();
+                    }}
+                    className="w-full py-2 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
+                >
+                    Reset Onboarding
+                </button>
+            </div>
         </div>
     );
 }

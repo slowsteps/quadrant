@@ -6,6 +6,7 @@ import PageEditor from './PageEditor';
 import Controls from './Controls';
 import { AppProvider, useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthProvider';
+import OnboardingModal from './OnboardingModal';
 
 function LayoutContent() {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -121,6 +122,7 @@ function LayoutContent() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
+            <OnboardingModal />
             {/* Header */}
             <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-20 shrink-0">
                 <div className="flex items-center gap-6">

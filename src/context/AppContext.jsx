@@ -10,10 +10,7 @@ const initialAxes = [
     { id: 'market', label: 'Market Focus', leftLabel: 'Enterprise', rightLabel: 'SMB' },
 ];
 
-const initialProducts = [
-    { id: 'p1', name: 'Product A', color: 'bg-indigo-100 border-indigo-200', axisValues: { price: 80, quality: 80, market: 20 } },
-    { id: 'p2', name: 'Product B', color: 'bg-emerald-100 border-emerald-200', axisValues: { price: 30, quality: 50, market: 80 } },
-];
+const initialProducts = [];
 
 export function AppProvider({ children }) {
     const [axes, setAxes] = useState(initialAxes);
