@@ -204,9 +204,28 @@ export default function QuadrantChart() {
 }
 
 function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', backgroundColor = '#ffffff', placement = 'bottom' }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
     const currentAxis = axes.find(a => a.id === currentAxisId);
 
-    let dropdownClasses = "absolute w-48 rounded-lg shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50";
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [isOpen]);
+
+    let dropdownClasses = "absolute w-48 rounded-lg shadow-xl border border-slate-100 overflow-hidden transition-all duration-200 z-50";
 
     if (placement === 'right') {
         dropdownClasses += " top-1/2 left-full ml-2 -translate-y-1/2";
@@ -217,15 +236,23 @@ function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', b
         dropdownClasses += " top-full left-1/2 -translate-x-1/2 mt-1";
     }
 
+    // Visibility classes
+    if (isOpen) {
+        dropdownClasses += " opacity-100 visible transform scale-100";
+    } else {
+        dropdownClasses += " opacity-0 invisible transform scale-95 pointer-events-none";
+    }
+
     return (
-        <div className={`group ${className}`} style={{ display: 'inline-block' }}>
+        <div ref={dropdownRef} className={`${className}`} style={{ display: 'inline-block' }}>
             {/* Display Label */}
-            <div
-                className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 py-1 rounded backdrop-blur cursor-pointer group-hover:shadow-sm group-hover:text-indigo-600 transition-all border border-transparent group-hover:border-indigo-100 whitespace-nowrap"
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 py-1 rounded backdrop-blur cursor-pointer hover:shadow-sm hover:text-indigo-600 transition-all border border-transparent hover:border-indigo-100 whitespace-nowrap focus:outline-none"
                 style={{ backgroundColor: `${backgroundColor}cc` }}
             >
                 {currentAxis?.label}{suffix}
-            </div>
+            </button>
 
             {/* Dropdown Menu */}
             <div
@@ -236,7 +263,10 @@ function AxisDropdown({ currentAxisId, axes, onSelect, suffix, className = '', b
                     {axes.map(axis => (
                         <button
                             key={axis.id}
-                            onClick={() => onSelect(axis.id)}
+                            onClick={() => {
+                                onSelect(axis.id);
+                                setIsOpen(false);
+                            }}
                             className={`w-full text-center px-3 py-2 text-xs font-medium hover:bg-indigo-50 transition-colors ${axis.id === currentAxisId ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-600'
                                 }`}
                         >

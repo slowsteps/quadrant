@@ -139,7 +139,7 @@ export function AppProvider({ children }) {
     };
 
     const updateProduct = (id, updates) => {
-        setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
+        setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
         setIsDirty(true);
     };
 

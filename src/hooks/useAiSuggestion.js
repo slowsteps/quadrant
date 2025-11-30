@@ -155,8 +155,106 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
         }
     };
 
+    const positionProduct = async (productName, axes, activeXAxisId, activeYAxisId, otherProducts) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+            if (!apiKey) {
+                throw new Error('OpenAI API key not found. Please add VITE_OPENAI_API_KEY to your .env file.');
+            }
+
+            const openai = new OpenAI({
+                apiKey,
+                baseURL: `${window.location.origin}/api/openai`,
+                dangerouslyAllowBrowser: true
+            });
+
+            const xAxis = axes.find(a => a.id === activeXAxisId);
+            const yAxis = axes.find(a => a.id === activeYAxisId);
+
+            // Context about other products to help relative positioning
+            const context = otherProducts
+                .filter(p => p.name !== productName)
+                .slice(0, 10) // Limit context to avoid token limits
+                .map(p => {
+                    const x = p.axisValues[activeXAxisId] || 50;
+                    const y = p.axisValues[activeYAxisId] || 50;
+                    return `- ${p.name}: ${xAxis.label}=${x}, ${yAxis.label}=${y}`;
+                }).join('\n');
+
+            const prompt = `Estimate the position of the product "${productName}" on a quadrant map defined by:
+X-Axis: ${xAxis.label} (${xAxis.leftLabel} = 0, ${xAxis.rightLabel} = 100)
+Y-Axis: ${yAxis.label} (${yAxis.leftLabel} = 0, ${yAxis.rightLabel} = 100)
+
+Context (other products):
+${context || "No other products yet."}
+
+Based on general knowledge about "${productName}", provide:
+1. xValue (0-100)
+2. yValue (0-100)
+3. A brief reasoning (max 1 sentence)
+
+IMPORTANT:
+- Use the FULL range from 0 to 100. 
+- 0 means extremely "${xAxis.leftLabel}" and 100 means extremely "${xAxis.rightLabel}".
+- Do NOT default to 50. 
+- Example: A very cheap product should be close to 0 on a Price axis (Low-High).
+- Example: A very expensive product should be close to 100.
+
+Respond ONLY in JSON:
+{
+  "xValue": 15,
+  "yValue": 85,
+  "reasoning": "..."
+}`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: "You are a product expert. Respond with valid JSON only." },
+                    { role: "user", content: prompt }
+                ],
+                temperature: 0.5,
+                max_tokens: 150
+            });
+
+            const responseText = completion.choices[0].message.content.trim();
+            console.log("AI Response:", responseText);
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                const match = responseText.match(/\{[\s\S]*\}/);
+                if (match) result = JSON.parse(match[0]);
+                else throw new Error('Failed to parse AI response');
+            }
+
+            // Validate
+            if (typeof result.xValue !== 'number' || typeof result.yValue !== 'number') {
+                throw new Error('Invalid coordinates from AI');
+            }
+
+            // Clamp
+            result.xValue = Math.max(0, Math.min(100, result.xValue));
+            result.yValue = Math.max(0, Math.min(100, result.yValue));
+
+            setIsLoading(false);
+            return result;
+
+        } catch (err) {
+            console.error('AI Positioning Error:', err);
+            setError(err.message);
+            setIsLoading(false);
+            throw err;
+        }
+    };
+
     return {
         generateSuggestion,
+        positionProduct,
         isLoading,
         error
     };

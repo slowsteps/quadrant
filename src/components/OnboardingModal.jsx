@@ -102,12 +102,16 @@ export default function OnboardingModal() {
                                 Map competitors, analyze market gaps, and share your insights.
                             </p>
 
-                            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-8">
+                            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-8 space-y-2">
                                 <p className="text-sm text-indigo-800">
                                     <strong>Note:</strong> You'll need to sign in with Google to save your projects to the cloud.
                                 </p>
+                                <p className="text-sm text-indigo-800">
+                                    <strong>Note:</strong> Not optimized for phones.
+                                </p>
                             </div>
 
+                            <h3 className="text-lg font-bold text-slate-900 mb-4">Example Projects</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                                 <button
                                     onClick={loadFashionExample}
