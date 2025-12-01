@@ -5,7 +5,7 @@ export function useAiSuggestion() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const generateSuggestion = async (products, axes, activeXAxisId, activeYAxisId) => {
+    const generateSuggestion = async (products, axes, activeXAxisId, activeYAxisId, constraints = []) => {
         setIsLoading(true);
         setError(null);
 
@@ -80,11 +80,16 @@ Current distribution:
 
 The ${targetQuadrant} quadrant (${targetDescription}) is currently underrepresented.
 
+Constraints (MUST FOLLOW):
+${constraints.length > 0 ? constraints.map(c => `- ${c}`).join('\n') : "None"}
+
 Suggest ONE REAL, EXISTING competing product that belongs in the ${targetQuadrant} quadrant (${targetDescription}) to balance the map. Consider:
 1. A REAL product that actually exists (do not make up fake names)
 2. Appropriate positioning specifically in the ${targetQuadrant} area
 3. Fill a gap or represent a different strategic position
 4. The company's primary domain name (e.g., "slack.com", "microsoft.com") for logo fetching
+5. STRICTLY ADHERE to the provided constraints.
+6. Provide 5 key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Examples: "Range: 300mi", "Origin: USA", "Market Cap: $50B". Max 5 words each.
 
 Respond ONLY in this exact JSON format (no markdown, no explanation):
 {
@@ -92,7 +97,8 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
   "domain": "example.com",
   "xValue": 75,
   "yValue": 50,
-  "reasoning": "Brief explanation of why this product fits here"
+  "reasoning": "Brief explanation of why this product fits here",
+  "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"]
 }`;
 
             const completion = await openai.chat.completions.create({
@@ -196,6 +202,7 @@ Based on general knowledge about "${productName}", provide:
 1. xValue (0-100)
 2. yValue (0-100)
 3. A brief reasoning (max 1 sentence)
+4. 5 key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Examples: "Range: 300mi", "Origin: USA", "Market Cap: $50B". Max 5 words each.
 
 IMPORTANT:
 - Use the FULL range from 0 to 100. 
@@ -208,7 +215,8 @@ Respond ONLY in JSON:
 {
   "xValue": 15,
   "yValue": 85,
-  "reasoning": "..."
+  "reasoning": "...",
+  "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"]
 }`;
 
             const completion = await openai.chat.completions.create({
@@ -235,6 +243,11 @@ Respond ONLY in JSON:
             // Validate
             if (typeof result.xValue !== 'number' || typeof result.yValue !== 'number') {
                 throw new Error('Invalid coordinates from AI');
+            }
+
+            // Ensure USPs exist
+            if (!result.usps || !Array.isArray(result.usps)) {
+                result.usps = [];
             }
 
             // Clamp

@@ -133,7 +133,7 @@ function LayoutContent() {
                         <input
                             value={currentFileName}
                             onChange={(e) => updateFileName(e.target.value)}
-                            className="text-xl font-bold text-slate-800 bg-transparent border-none hover:bg-white/50 focus:bg-white focus:ring-0 focus:outline-none transition-all px-2 py-1 rounded min-w-[10ch] cursor-pointer focus:cursor-text"
+                            className="text-xl font-bold text-slate-800 bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-2 py-1 min-w-[10ch] focus:outline-none transition-all"
                             style={{ width: `${Math.max(10, currentFileName.length)}ch` }}
                             placeholder="Untitled"
                         />
@@ -323,6 +323,19 @@ function LayoutContent() {
                     <div className="flex-1 overflow-y-auto p-6 min-w-[24rem]">
                         <AxisEditor onClose={() => setIsPanelOpen(false)} />
                         <PageEditor />
+
+                        {/* Reset Onboarding (Dev/Admin Tool) */}
+                        <div className="mt-8 pt-6 border-t border-slate-100 pb-6">
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('hasSeenOnboarding');
+                                    window.location.reload();
+                                }}
+                                className="w-full py-2 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
+                            >
+                                Reset Onboarding
+                            </button>
+                        </div>
                     </div>
                 </div>
             </main>

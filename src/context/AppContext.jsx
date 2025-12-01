@@ -25,6 +25,7 @@ export function AppProvider({ children }) {
     const [currentFileName, setCurrentFileName] = useState('Untitled project');
     const [fileHandle, setFileHandle] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
+    const [constraints, setConstraints] = useState([]);
     const { user } = useAuth();
 
     // Derived state
@@ -48,6 +49,7 @@ export function AppProvider({ children }) {
         setCurrentFileName('Untitled project');
         setFileHandle(null);
         setIsDirty(false);
+        setConstraints([]);
     };
 
     // Page Actions
@@ -121,7 +123,7 @@ export function AppProvider({ children }) {
     };
 
     // Product Actions
-    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null) => {
+    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null) => {
         const defaultAxisValues = {};
         axes.forEach(axis => {
             defaultAxisValues[axis.id] = 50;
@@ -133,6 +135,7 @@ export function AppProvider({ children }) {
             color: 'bg-white border-slate-200',
             logoUrl: logoUrl || '',
             reasoning: reasoning || null,
+            usps: usps || [],
             axisValues: axisValues || defaultAxisValues
         }]);
         setIsDirty(true);
@@ -166,6 +169,7 @@ export function AppProvider({ children }) {
     const loadData = (data, fileName, handle = null) => {
         if (data.axes) setAxes(data.axes);
         if (data.products) setProducts(data.products);
+        if (data.constraints) setConstraints(data.constraints);
 
         // Handle legacy data format (no pages)
         if (data.pages) {
@@ -200,7 +204,8 @@ export function AppProvider({ children }) {
         const data = {
             axes,
             products,
-            pages // Save pages structure
+            pages, // Save pages structure
+            constraints
         };
 
         const { data: existing } = await supabase
@@ -291,7 +296,8 @@ export function AppProvider({ children }) {
             currentFileName, setCurrentFileName, updateFileName,
             fileHandle, setFileHandle,
             isDirty, setIsDirty, isSaving, // Expose isSaving
-            saveToCloud, fetchQuadrants, loadQuadrant
+            saveToCloud, fetchQuadrants, loadQuadrant,
+            constraints, setConstraints
         }}>
             {children}
         </AppContext.Provider>

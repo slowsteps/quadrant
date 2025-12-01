@@ -29,15 +29,18 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
         }
     }, [isEditing]);
 
-    const handleSaveName = () => {
+    const handleSaveName = async () => {
         if (editName.trim()) {
             let logoToSave = editLogoUrl.trim();
+            const trimmedName = editName.trim();
 
             // Auto-fetch logo if URL is empty
-            if (!logoToSave && editName.trim()) {
-                // Simple heuristic: try to guess domain from name
-                // Remove spaces and special chars, assume .com if no dot
-                let domain = editName.trim().toLowerCase().replace(/[^a-z0-9.]/g, '');
+            if (!logoToSave && trimmedName) {
+                // Heuristic: take first word before space, remove special chars
+                // e.g. "Visual Studio Code" -> "visual"
+                const words = trimmedName.toLowerCase().split(' ');
+                let domain = words[0].replace(/[^a-z0-9.]/g, '');
+
                 if (!domain.includes('.')) {
                     domain += '.com';
                 }
@@ -45,10 +48,23 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             }
 
             updateProduct(product.id, {
-                name: editName.trim(),
+                name: trimmedName,
                 logoUrl: logoToSave
             });
-            setIsEditing(false);
+
+            // If this was a new product (default name) and user changed it, auto-position
+            if (product.name === 'Untitled Product' && trimmedName !== 'Untitled Product') {
+                // We need to trigger the AI positioning
+                // Since handlePositionWithAi relies on state that might not be updated yet (product name in context),
+                // we'll pass the new name directly or rely on the local state which is `editName`
+                // But handlePositionWithAi uses `editName` state so it should be fine.
+                // We just need to make sure we don't close edit mode yet? 
+                // Actually, the user might want to see the result.
+                // Let's call it.
+                await handlePositionWithAi();
+            } else {
+                setIsEditing(false);
+            }
         } else {
             setEditName(product.name);
             setEditLogoUrl(product.logoUrl || '');
@@ -65,7 +81,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            // Don't auto-save on Enter, just prevent default
+            handleSaveName();
         }
         if (e.key === 'Escape') handleCancelEdit();
     };
@@ -82,8 +98,12 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
         // Save name and logo first
         let logoToSave = editLogoUrl.trim();
-        if (!logoToSave && editName.trim()) {
-            let domain = editName.trim().toLowerCase().replace(/[^a-z0-9.]/g, '');
+        const trimmedName = editName.trim();
+
+        if (!logoToSave && trimmedName) {
+            const words = trimmedName.toLowerCase().split(' ');
+            let domain = words[0].replace(/[^a-z0-9.]/g, '');
+
             if (!domain.includes('.')) {
                 domain += '.com';
             }
@@ -112,7 +132,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             });
 
             updateProduct(product.id, {
-                reasoning: result.reasoning
+                reasoning: result.reasoning,
+                usps: result.usps
             });
 
             // Don't close edit mode - let user continue editing
@@ -163,6 +184,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            onBlur={handleSaveName}
                             placeholder="Product Name"
                             className="w-full text-sm font-medium text-slate-800 bg-white border border-transparent hover:border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors"
                         />
@@ -193,6 +215,17 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                                 Done
                             </button>
                         </div>
+                        {/* Show USPs in edit mode */}
+                        {product.usps && product.usps.length > 0 && (
+                            <div className="w-full mt-1 pt-1 border-t border-slate-100">
+                                <div className="text-[10px] font-bold text-slate-400 mb-1">Key Specifications:</div>
+                                <ul className="list-disc list-outside ml-4 text-[10px] text-slate-500 text-left space-y-0.5">
+                                    {product.usps.map((usp, i) => (
+                                        <li key={i} className="pl-1">{usp}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div
@@ -240,6 +273,16 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             </div>
                             <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none">
                                 {product.reasoning}
+                                {product.usps && product.usps.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-slate-700">
+                                        <div className="text-[10px] font-bold text-slate-400 mb-1">Key Specifications:</div>
+                                        <ul className="list-disc list-outside ml-4 text-[10px] text-slate-300 space-y-0.5">
+                                            {product.usps.map((usp, i) => (
+                                                <li key={i} className="pl-1">{usp}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                                 <div className="mt-2 pt-2 border-t border-slate-700 flex flex-col gap-0.5 text-[10px] text-slate-300">
                                     <div className="flex justify-between">
                                         <span>{axes.find(a => a.id === activeXAxisId)?.label}:</span>
@@ -256,6 +299,6 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                     </div>
                 )}
             </div>
-        </motion.div>
+        </motion.div >
     );
 }

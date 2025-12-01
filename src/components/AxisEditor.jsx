@@ -3,9 +3,10 @@ import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function AxisEditor({ onClose }) {
-    const { axes, addAxis, updateAxis, deleteAxis } = useApp();
+    const { axes, addAxis, updateAxis, deleteAxis, constraints, setConstraints } = useApp();
     const [isAdding, setIsAdding] = useState(false);
     const [newAxis, setNewAxis] = useState({ label: '', leftLabel: '', rightLabel: '' });
+    const [newConstraint, setNewConstraint] = useState('');
 
     const handleAdd = () => {
         if (newAxis.label && newAxis.leftLabel && newAxis.rightLabel) {
@@ -13,6 +14,19 @@ export default function AxisEditor({ onClose }) {
             setNewAxis({ label: '', leftLabel: '', rightLabel: '' });
             setIsAdding(false);
         }
+    };
+
+    const handleAddConstraint = () => {
+        if (newConstraint.trim()) {
+            setConstraints([...constraints, newConstraint.trim()]);
+            setNewConstraint('');
+        }
+    };
+
+    const handleDeleteConstraint = (index) => {
+        const newConstraints = [...constraints];
+        newConstraints.splice(index, 1);
+        setConstraints(newConstraints);
     };
 
     return (
@@ -92,18 +106,58 @@ export default function AxisEditor({ onClose }) {
                 )}
             </div>
 
-            {/* Reset Onboarding (Dev/Admin Tool) */}
+            {/* Constraints Section */}
             <div className="mt-8 pt-6 border-t border-slate-100">
-                <button
-                    onClick={() => {
-                        localStorage.removeItem('hasSeenOnboarding');
-                        window.location.reload();
-                    }}
-                    className="w-full py-2 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
-                >
-                    Reset Onboarding
-                </button>
+                <h3 className="text-lg font-bold text-slate-800 mb-3">AI Constraints</h3>
+                <div className="space-y-3">
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={newConstraint}
+                            onChange={(e) => setNewConstraint(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddConstraint();
+                                }
+                            }}
+                            placeholder="e.g. Must be B2B"
+                            className="flex-1 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                        />
+                        <button
+                            onClick={handleAddConstraint}
+                            disabled={!newConstraint.trim()}
+                            className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <Plus size={18} />
+                        </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        {constraints.map((constraint, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-medium border border-indigo-100"
+                            >
+                                <span>{constraint}</span>
+                                <button
+                                    onClick={() => handleDeleteConstraint(index)}
+                                    className="text-indigo-400 hover:text-indigo-600 p-0.5 rounded-full hover:bg-indigo-100 transition-colors"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ))}
+                        {constraints.length === 0 && (
+                            <div className="text-xs text-slate-400 italic px-1">
+                                No constraints added.
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
+
+
         </div>
     );
 }
