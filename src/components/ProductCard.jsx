@@ -5,9 +5,10 @@ import { useApp } from '../context/AppContext';
 import { useAiSuggestion } from '../hooks/useAiSuggestion';
 
 export default function ProductCard({ product, x, y, containerRef, onDragEnd, isDraggingEnabled = true }) {
-    const { updateProduct, deleteProduct, activeXAxisId, activeYAxisId } = useApp();
+    const { updateProduct, deleteProduct, activeXAxisId, activeYAxisId, currentFileName } = useApp();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(product.name);
+    const [editUrl, setEditUrl] = useState(product.url || '');
     const [editLogoUrl, setEditLogoUrl] = useState(product.logoUrl || '');
     const inputRef = useRef(null);
     const isDragging = useRef(false);
@@ -49,6 +50,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
             updateProduct(product.id, {
                 name: trimmedName,
+                url: editUrl.trim(),
                 logoUrl: logoToSave
             });
 
@@ -67,6 +69,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             }
         } else {
             setEditName(product.name);
+            setEditUrl(product.url || '');
             setEditLogoUrl(product.logoUrl || '');
             setIsEditing(false);
         }
@@ -74,6 +77,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
     const handleCancelEdit = () => {
         setEditName(product.name);
+        setEditUrl(product.url || '');
         setEditLogoUrl(product.logoUrl || '');
         setIsEditing(false);
     };
@@ -112,6 +116,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
         updateProduct(product.id, {
             name: editName.trim(),
+            url: editUrl.trim(),
             logoUrl: logoToSave
         });
 
@@ -121,7 +126,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 axes,
                 activeXAxisId,
                 activeYAxisId,
-                products
+                products,
+                currentFileName // Pass project title as context
             );
 
             console.log('AI Positioning Result:', result);
@@ -184,7 +190,6 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            onBlur={handleSaveName}
                             placeholder="Product Name"
                             className="w-full text-sm font-medium text-slate-800 bg-white border border-transparent hover:border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors"
                         />
@@ -215,6 +220,13 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                                 Done
                             </button>
                         </div>
+                        <input
+                            value={editUrl}
+                            onChange={(e) => setEditUrl(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Product URL (optional)"
+                            className="w-full text-[10px] text-slate-500 bg-slate-50 border border-transparent hover:border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors"
+                        />
                         {/* Show USPs in edit mode */}
                         {product.usps && product.usps.length > 0 && (
                             <div className="w-full mt-1 pt-1 border-t border-slate-100">

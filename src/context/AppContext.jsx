@@ -123,7 +123,7 @@ export function AppProvider({ children }) {
     };
 
     // Product Actions
-    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null) => {
+    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null, url = null) => {
         const defaultAxisValues = {};
         axes.forEach(axis => {
             defaultAxisValues[axis.id] = 50;
@@ -134,6 +134,7 @@ export function AppProvider({ children }) {
             name,
             color: 'bg-white border-slate-200',
             logoUrl: logoUrl || '',
+            url: url || '',
             reasoning: reasoning || null,
             usps: usps || [],
             axisValues: axisValues || defaultAxisValues
@@ -201,60 +202,86 @@ export function AppProvider({ children }) {
     const saveToCloud = async () => {
         if (!user) throw new Error('User not authenticated');
 
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No active session');
+
         const data = {
             axes,
             products,
-            pages, // Save pages structure
+            pages,
             constraints
         };
 
-        const { data: existing } = await supabase
-            .from('quadrants')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('name', currentFileName)
-            .maybeSingle();
-
         const payload = {
-            user_id: user.id,
             name: currentFileName,
-            data: data,
-            updated_at: new Date()
+            data: data
         };
 
-        if (existing) {
-            payload.id = existing.id;
+        // If we have a fileHandle (which acts as ID in this context if we were using file system, but here we rely on name/ID logic in backend)
+        // Actually, the backend logic tries to find by name if ID isn't provided.
+        // But wait, we don't store the ID in the state explicitly except maybe in fileHandle?
+        // No, fileHandle is for File System Access API.
+        // We should probably store the cloud ID if we have it.
+        // For now, let's rely on the backend's upsert logic by name, or if we loaded it, we might want to keep the ID.
+        // Let's check if we have an ID stored. We don't seem to store the cloud ID in the state.
+        // The backend logic:
+        // if (id) payload.id = id;
+        // else find by name and user_id.
+
+        // So sending name is enough for upserting by name.
+
+        const response = await fetch('/api/quadrants', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save');
         }
 
-        const { error } = await supabase
-            .from('quadrants')
-            .upsert(payload);
-
-        if (error) throw error;
         setIsDirty(false);
         return true;
     };
 
     const fetchQuadrants = async () => {
         if (!user) return [];
-        const { data, error } = await supabase
-            .from('quadrants')
-            .select('id, name, updated_at')
-            .eq('user_id', user.id)
-            .order('updated_at', { ascending: false });
 
-        if (error) throw error;
-        return data;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return [];
+
+        const response = await fetch('/api/quadrants', {
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch quadrants');
+        }
+
+        return await response.json();
     };
 
     const loadQuadrant = async (id) => {
-        const { data, error } = await supabase
-            .from('quadrants')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No active session');
 
-        if (error) throw error;
+        const response = await fetch(`/api/quadrants/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load quadrant');
+        }
+
+        const data = await response.json();
 
         if (data && data.data) {
             loadData(data.data, data.name);

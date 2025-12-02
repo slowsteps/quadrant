@@ -1,12 +1,1 @@
-{
-    "rewrites": [
-        {
-            "source": "/api/openai/:path*",
-            "destination": "https://api.openai.com/v1/:path*"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
-    ]
-}
+{}
