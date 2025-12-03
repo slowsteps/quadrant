@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown, FilePlus } from 'lucide-react';
+import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown, FilePlus, CheckCircle2 } from 'lucide-react';
 import QuadrantChart from './QuadrantChart';
 import AxisEditor from './AxisEditor';
 import PageEditor from './PageEditor';
@@ -7,6 +7,7 @@ import Controls from './Controls';
 import { AppProvider, useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthProvider';
 import OnboardingModal from './OnboardingModal';
+import WelcomePage from './WelcomePage';
 
 function LayoutContent() {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -120,6 +121,10 @@ function LayoutContent() {
         }
     };
 
+    if (!user) {
+        return <WelcomePage />;
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
             <OnboardingModal />
@@ -212,12 +217,18 @@ function LayoutContent() {
                                 disabled={!isDirty || isSaving}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${isDirty
                                     ? 'text-indigo-600 hover:bg-indigo-50'
-                                    : 'text-slate-400'
+                                    : 'text-slate-400 bg-slate-50'
                                     } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                title={isDirty ? `Save changes` : 'No changes to save'}
+                                title={isDirty ? `Save changes` : 'All changes saved'}
                             >
-                                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                {isSaving ? 'Saving...' : 'Save'}
+                                {isSaving ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : isDirty ? (
+                                    <Save size={18} />
+                                ) : (
+                                    <CheckCircle2 size={18} />
+                                )}
+                                {isSaving ? 'Saving...' : isDirty ? 'Save' : 'Auto Saved'}
                             </button>
 
                             <div className="relative" ref={recentRef}>

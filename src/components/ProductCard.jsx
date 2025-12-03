@@ -142,7 +142,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
     };
 
     const { enrichProduct, isLoading: isAiLoading } = useAiSuggestion();
-    const { axes, products, updateProductAxisValues, constraints, specifications } = useApp();
+    const { axes, products, updateProductAxisValues, constraints, specifications, restrictToUserSpecs } = useApp();
 
     const handleEnrichProduct = async () => {
         if (!editName.trim()) return;
@@ -318,20 +318,22 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             <div className="w-full mt-1 pt-1 border-t border-slate-100">
                                 <div className="text-[10px] font-bold text-slate-400 mb-1">Specifications:</div>
                                 <div className="text-[10px] text-slate-500 text-left space-y-0.5">
-                                    {product.usps?.map((usp, i) => (
+                                    {!restrictToUserSpecs && product.usps?.map((usp, i) => (
                                         <div key={`usp-${i}`} className="pl-1 flex items-start gap-1">
                                             <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
                                             <span className="text-slate-500 font-medium">{usp}</span>
                                         </div>
                                     ))}
-                                    {Object.entries(product.specifications || {}).map(([key, value], i) => (
-                                        <div key={`spec-${i}`} className="pl-1 flex items-start gap-1">
-                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
-                                            <span className="text-slate-500">
-                                                {key}: <span className="font-medium text-slate-700">{value}</span>
-                                            </span>
-                                        </div>
-                                    ))}
+                                    {Object.entries(product.specifications || {})
+                                        .filter(([key]) => !restrictToUserSpecs || specifications.some(s => s.toLowerCase() === key.toLowerCase()))
+                                        .map(([key, value], i) => (
+                                            <div key={`spec-${i}`} className="pl-1 flex items-start gap-1">
+                                                <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                                                <span className="text-slate-500">
+                                                    {key}: <span className="font-medium text-slate-700">{value}</span>
+                                                </span>
+                                            </div>
+                                        ))}
                                 </div>
                             </div>
                         )}

@@ -27,6 +27,7 @@ export function AppProvider({ children }) {
     const [isDirty, setIsDirty] = useState(false);
     const [constraints, setConstraints] = useState([]);
     const [specifications, setSpecifications] = useState([]);
+    const [restrictToUserSpecs, setRestrictToUserSpecs] = useState(false);
     const { user } = useAuth();
 
     // Derived state
@@ -52,6 +53,8 @@ export function AppProvider({ children }) {
         setIsDirty(false);
         setConstraints([]);
         setSpecifications([]);
+        setRestrictToUserSpecs(false);
+
     };
 
     // Page Actions
@@ -175,6 +178,8 @@ export function AppProvider({ children }) {
         if (data.products) setProducts(data.products);
         if (data.constraints) setConstraints(data.constraints);
         if (data.specifications) setSpecifications(data.specifications);
+        if (data.restrictToUserSpecs !== undefined) setRestrictToUserSpecs(data.restrictToUserSpecs);
+
 
         // Handle legacy data format (no pages)
         if (data.pages) {
@@ -214,7 +219,8 @@ export function AppProvider({ children }) {
             products,
             pages,
             constraints,
-            specifications
+            specifications,
+            restrictToUserSpecs,
         };
 
         const payload = {
@@ -330,7 +336,8 @@ export function AppProvider({ children }) {
             isDirty, setIsDirty, isSaving, // Expose isSaving
             saveToCloud, fetchQuadrants, loadQuadrant,
             constraints, setConstraints,
-            specifications, setSpecifications
+            specifications, setSpecifications,
+            restrictToUserSpecs, setRestrictToUserSpecs,
         }}>
             {children}
         </AppContext.Provider>
@@ -338,3 +345,4 @@ export function AppProvider({ children }) {
 }
 
 export const useApp = () => useContext(AppContext);
+

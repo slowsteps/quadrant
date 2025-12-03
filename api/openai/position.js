@@ -80,14 +80,18 @@ Respond ONLY in JSON:
   "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"]
 }`;
 
-        const completion = await openai.chat.completions.create({
+        const messages = [
+            { role: "system", content: "You are a product expert. Respond with valid JSON only." },
+            { role: "user", content: prompt }
+        ];
+
+        const completionConfig = {
             model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are a product expert. Respond with valid JSON only." },
-                { role: "user", content: prompt }
-            ],
+            messages: messages,
             max_tokens: 500
-        });
+        };
+
+        let completion = await openai.chat.completions.create(completionConfig);
 
         const responseText = completion.choices[0].message.content.trim();
         const result = extractJson(responseText);

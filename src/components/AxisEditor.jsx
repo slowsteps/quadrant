@@ -3,7 +3,7 @@ import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function AxisEditor({ onClose }) {
-    const { axes, addAxis, updateAxis, deleteAxis, constraints, setConstraints, specifications, setSpecifications } = useApp();
+    const { axes, addAxis, updateAxis, deleteAxis, constraints, setConstraints, specifications, setSpecifications, restrictToUserSpecs, setRestrictToUserSpecs } = useApp();
     const [isAdding, setIsAdding] = useState(false);
     const [newAxis, setNewAxis] = useState({ label: '', leftLabel: '', rightLabel: '' });
     const [newConstraint, setNewConstraint] = useState('');
@@ -219,6 +219,19 @@ export default function AxisEditor({ onClose }) {
                             </div>
                         )}
                     </div>
+
+                    {/* Checkboxes below tags */}
+                    <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={restrictToUserSpecs}
+                                onChange={(e) => setRestrictToUserSpecs(e.target.checked)}
+                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span className="text-xs text-slate-600 font-medium">Only show these on cards</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -259,13 +272,12 @@ function AxisItem({ axis, updateAxis, deleteAxis }) {
     return (
         <div
             ref={containerRef}
-            className={`
-                rounded-lg border transition-all duration-200
+            className={`rounded-lg - lg border transition - all duration - 200
                 ${isEditing
                     ? 'bg-white border-indigo-200 shadow-sm'
                     : 'bg-white border-slate-200 hover:border-indigo-200'
                 }
-            `}
+`}
         >
             <div className="p-3">
                 <div className="flex items-start justify-between">
@@ -291,7 +303,7 @@ function AxisItem({ axis, updateAxis, deleteAxis }) {
                         {/* Collapsed View: Summary - Hidden as requested */}
                         {!isEditing && (
                             <div
-                                className="h-4" // Spacer to keep some height if needed, or just remove. Let's keep it minimal.
+                                className="h-0" // Spacer to keep some height if needed, or just remove. Let's keep it minimal.
                                 onClick={() => setIsEditing(true)}
                             >
                             </div>
@@ -352,12 +364,12 @@ function AxisItem({ axis, updateAxis, deleteAxis }) {
                             setIsEditing(!isEditing);
                         }}
                         className={`
-                            p-1.5 rounded-md transition-colors ml-2 flex-shrink-0
+p - 1.5 rounded - md transition - colors ml - 2 flex - shrink - 0
                             ${isEditing
                                 ? 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'
                                 : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
                             }
-                        `}
+`}
                     >
                         {isEditing ? <X size={18} /> : <Pencil size={18} />}
                     </button>

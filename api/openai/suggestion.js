@@ -95,8 +95,8 @@ Constraints (MUST FOLLOW):
 ${constraints && constraints.length > 0 ? constraints.map(c => `- ${c}`).join('\n') : "None"}
 ${specificationsText}
 
-Suggest ONE REAL, EXISTING competing product that belongs in the ${targetQuadrant} quadrant (${targetDescription}) to balance the map. Consider:
-1. A REAL product that actually exists (do not make up fake names)
+Suggest ONE REAL, EXISTING competing product or company that belongs in the ${targetQuadrant} quadrant (${targetDescription}) to balance the map. Consider:
+1. A REAL product or companythat actually exists (do not make up fake names)
 2. Appropriate positioning specifically in the ${targetQuadrant} area
 3. Fill a gap or represent a different strategic position
 4. The company's primary domain name (e.g., "slack.com", "microsoft.com") for logo fetching
@@ -114,14 +114,18 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
   "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"${specifications && specifications.length > 0 ? ', "USP 6", "USP 7", "USP 8", "USP 9", "USP 10"' : ''}]${specifications && specifications.length > 0 ? `,\n  "specifications": { "Founded": "2008", "Employees": "50,000+", "Revenue": "$10B" }` : ''}
 }`;
 
-        const completion = await openai.chat.completions.create({
+        const messages = [
+            { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only. Always use metric units." },
+            { role: "user", content: prompt }
+        ];
+
+        const completionConfig = {
             model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only. Always use metric units." },
-                { role: "user", content: prompt }
-            ],
+            messages: messages,
             max_tokens: 800
-        });
+        };
+
+        let completion = await openai.chat.completions.create(completionConfig);
 
         const responseText = completion.choices[0].message.content.trim();
         const suggestion = extractJson(responseText);
@@ -142,6 +146,7 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
         } else {
             suggestion.logoUrl = null;
         }
+
 
         return new Response(JSON.stringify(suggestion), {
             headers: { 'Content-Type': 'application/json' }

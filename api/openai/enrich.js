@@ -95,15 +95,19 @@ Respond ONLY in JSON:
   "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"${specifications && specifications.length > 0 ? ', "USP 6", "USP 7", "USP 8", "USP 9", "USP 10"' : ''}]${specifications && specifications.length > 0 ? `,\n  "specifications": { "Founded": "2008", "Employees": "50,000+", "Revenue": "$10B" }` : ''}
 }`;
 
-        const completion = await openai.chat.completions.create({
+        const messages = [
+            { role: "system", content: "You are a product expert. Respond with valid JSON only. Always use metric units." },
+            { role: "user", content: prompt }
+        ];
+
+        const completionConfig = {
             model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are a product expert. Respond with valid JSON only. Always use metric units." },
-                { role: "user", content: prompt }
-            ],
+            messages: messages,
             temperature: 0.5,
             max_tokens: 800
-        });
+        };
+
+        let completion = await openai.chat.completions.create(completionConfig);
 
         const responseText = completion.choices[0].message.content.trim();
         const result = extractJson(responseText);
@@ -128,6 +132,15 @@ Respond ONLY in JSON:
             result.logoUrl = `https://www.google.com/s2/favicons?domain=${result.domain}&sz=128`;
         } else {
             result.logoUrl = null;
+        }
+
+        // Log which specifications were provided
+        if (enableWebSearch && result.specifications && Object.keys(result.specifications).length > 0) {
+            console.log(`Specifications provided for ${productName}:`);
+            Object.entries(result.specifications).forEach(([key, value]) => {
+                console.log(`  - ${key}: ${value}`);
+            });
+            console.log('');
         }
 
         return new Response(JSON.stringify(result), {
