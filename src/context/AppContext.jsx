@@ -26,6 +26,7 @@ export function AppProvider({ children }) {
     const [fileHandle, setFileHandle] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
     const [constraints, setConstraints] = useState([]);
+    const [specifications, setSpecifications] = useState([]);
     const { user } = useAuth();
 
     // Derived state
@@ -50,6 +51,7 @@ export function AppProvider({ children }) {
         setFileHandle(null);
         setIsDirty(false);
         setConstraints([]);
+        setSpecifications([]);
     };
 
     // Page Actions
@@ -123,7 +125,7 @@ export function AppProvider({ children }) {
     };
 
     // Product Actions
-    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null, url = null) => {
+    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null, url = null, specifications = {}) => {
         const defaultAxisValues = {};
         axes.forEach(axis => {
             defaultAxisValues[axis.id] = 50;
@@ -137,6 +139,7 @@ export function AppProvider({ children }) {
             url: url || '',
             reasoning: reasoning || null,
             usps: usps || [],
+            specifications: specifications || {},
             axisValues: axisValues || defaultAxisValues
         }]);
         setIsDirty(true);
@@ -171,6 +174,7 @@ export function AppProvider({ children }) {
         if (data.axes) setAxes(data.axes);
         if (data.products) setProducts(data.products);
         if (data.constraints) setConstraints(data.constraints);
+        if (data.specifications) setSpecifications(data.specifications);
 
         // Handle legacy data format (no pages)
         if (data.pages) {
@@ -209,7 +213,8 @@ export function AppProvider({ children }) {
             axes,
             products,
             pages,
-            constraints
+            constraints,
+            specifications
         };
 
         const payload = {
@@ -324,7 +329,8 @@ export function AppProvider({ children }) {
             fileHandle, setFileHandle,
             isDirty, setIsDirty, isSaving, // Expose isSaving
             saveToCloud, fetchQuadrants, loadQuadrant,
-            constraints, setConstraints
+            constraints, setConstraints,
+            specifications, setSpecifications
         }}>
             {children}
         </AppContext.Provider>

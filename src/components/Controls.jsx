@@ -11,7 +11,8 @@ export default function Controls() {
         activeXAxisId,
         activeYAxisId,
         constraints,
-        currentFileName
+        currentFileName,
+        specifications
     } = useApp();
 
     const { generateSuggestion, isLoading, error } = useAiSuggestion();
@@ -20,7 +21,7 @@ export default function Controls() {
     const handleAiSuggestion = async () => {
         try {
             setShowError(false);
-            const suggestion = await generateSuggestion(products, axes, activeXAxisId, activeYAxisId, constraints, currentFileName);
+            const suggestion = await generateSuggestion(products, axes, activeXAxisId, activeYAxisId, constraints, currentFileName, specifications);
 
             // Create axis values object using the active axes
             const axisValues = {
@@ -35,8 +36,8 @@ export default function Controls() {
                 }
             });
 
-            // Add product with axis values, logo URL, reasoning, and USPs from AI suggestion
-            addProduct(suggestion.name, axisValues, suggestion.logoUrl || null, suggestion.reasoning || null, suggestion.usps || null, suggestion.domain || null);
+            // Add product with axis values, logo URL, reasoning, USPs, and specifications from AI suggestion
+            addProduct(suggestion.name, axisValues, suggestion.logoUrl || null, suggestion.reasoning || null, suggestion.usps || null, suggestion.domain || null, suggestion.specifications || {});
         } catch (err) {
             console.error('Failed to generate suggestion:', err);
             setShowError(true);

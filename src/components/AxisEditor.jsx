@@ -3,10 +3,11 @@ import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function AxisEditor({ onClose }) {
-    const { axes, addAxis, updateAxis, deleteAxis, constraints, setConstraints } = useApp();
+    const { axes, addAxis, updateAxis, deleteAxis, constraints, setConstraints, specifications, setSpecifications } = useApp();
     const [isAdding, setIsAdding] = useState(false);
     const [newAxis, setNewAxis] = useState({ label: '', leftLabel: '', rightLabel: '' });
     const [newConstraint, setNewConstraint] = useState('');
+    const [newSpecification, setNewSpecification] = useState('');
 
     const handleAdd = () => {
         if (newAxis.label && newAxis.leftLabel && newAxis.rightLabel) {
@@ -27,6 +28,19 @@ export default function AxisEditor({ onClose }) {
         const newConstraints = [...constraints];
         newConstraints.splice(index, 1);
         setConstraints(newConstraints);
+    };
+
+    const handleAddSpecification = () => {
+        if (newSpecification.trim()) {
+            setSpecifications([...specifications, newSpecification.trim()]);
+            setNewSpecification('');
+        }
+    };
+
+    const handleDeleteSpecification = (index) => {
+        const newSpecs = [...specifications];
+        newSpecs.splice(index, 1);
+        setSpecifications(newSpecs);
     };
 
     return (
@@ -98,7 +112,7 @@ export default function AxisEditor({ onClose }) {
                 ) : (
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all font-medium text-sm"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all font-medium text-sm"
                     >
                         <Plus size={18} />
                         Add Axis
@@ -151,6 +165,57 @@ export default function AxisEditor({ onClose }) {
                         {constraints.length === 0 && (
                             <div className="text-xs text-slate-400 italic px-1">
                                 No constraints added.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Specifications Section */}
+            <div className="mt-8 pt-6 border-t border-slate-100">
+                <h3 className="text-lg font-bold text-slate-800 mb-3">Specifications</h3>
+                <div className="space-y-3">
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={newSpecification}
+                            onChange={(e) => setNewSpecification(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddSpecification();
+                                }
+                            }}
+                            placeholder="e.g. Founded, Employees, Revenue"
+                            className="flex-1 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                        />
+                        <button
+                            onClick={handleAddSpecification}
+                            disabled={!newSpecification.trim()}
+                            className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <Plus size={18} />
+                        </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        {specifications.map((spec, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-medium border border-indigo-100"
+                            >
+                                <span>{spec}</span>
+                                <button
+                                    onClick={() => handleDeleteSpecification(index)}
+                                    className="text-indigo-400 hover:text-indigo-600 p-0.5 rounded-full hover:bg-indigo-100 transition-colors"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ))}
+                        {specifications.length === 0 && (
+                            <div className="text-xs text-slate-400 italic px-1">
+                                No specifications added.
                             </div>
                         )}
                     </div>

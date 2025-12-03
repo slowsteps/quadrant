@@ -31,7 +31,7 @@ export default async function handler(req) {
     }
 
     try {
-        const { products, axes, activeXAxisId, activeYAxisId, constraints, projectTitle } = await req.json();
+        const { products, axes, activeXAxisId, activeYAxisId, constraints, projectTitle, specifications } = await req.json();
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
@@ -71,6 +71,10 @@ export default async function handler(req) {
             case 'bottomLeft': targetDescription = `Low ${xAxis.label} and Low ${yAxis.label}`; break;
         }
 
+        const specificationsText = specifications && specifications.length > 0
+            ? `\nSpecifications to provide:\n${specifications.map(s => `- ${s}`).join('\n')}`
+            : '';
+
         const prompt = `You are analyzing a product quadrant map${projectTitle ? ` for the project "${projectTitle}"` : ''}. The current products and their positions are:
 
 ${productContext}
@@ -89,6 +93,7 @@ The ${targetQuadrant} quadrant (${targetDescription}) is currently underrepresen
 
 Constraints (MUST FOLLOW):
 ${constraints && constraints.length > 0 ? constraints.map(c => `- ${c}`).join('\n') : "None"}
+${specificationsText}
 
 Suggest ONE REAL, EXISTING competing product that belongs in the ${targetQuadrant} quadrant (${targetDescription}) to balance the map. Consider:
 1. A REAL product that actually exists (do not make up fake names)
@@ -96,7 +101,8 @@ Suggest ONE REAL, EXISTING competing product that belongs in the ${targetQuadran
 3. Fill a gap or represent a different strategic position
 4. The company's primary domain name (e.g., "slack.com", "microsoft.com") for logo fetching
 5. STRICTLY ADHERE to the provided constraints.
-6. Provide 5 key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Examples: "Range: 300mi", "Origin: USA", "Market Cap: $50B". Max 5 words each.
+6. Provide ${specifications && specifications.length > 0 ? `${Math.min(10, specifications.length + 5)}` : '5'} key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Examples: "Range: 300km", "Origin: USA", "Market Cap: $50B". Max 5 words each. **ALWAYS use METRIC units** (km not miles, kg not lbs, °C not °F).
+${specifications && specifications.length > 0 ? `7. Provide specification values for: ${specifications.join(', ')}. For brands, provide marketer-relevant data like Founded, Employees, Revenue, HQ Location.` : ''}
 
 Respond ONLY in this exact JSON format (no markdown, no explanation):
 {
@@ -105,16 +111,16 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
   "xValue": 75,
   "yValue": 50,
   "reasoning": "Brief explanation of why this product fits here",
-  "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"]
+  "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"${specifications && specifications.length > 0 ? ', "USP 6", "USP 7", "USP 8", "USP 9", "USP 10"' : ''}]${specifications && specifications.length > 0 ? `,\n  "specifications": { "Founded": "2008", "Employees": "50,000+", "Revenue": "$10B" }` : ''}
 }`;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only." },
+                { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only. Always use metric units." },
                 { role: "user", content: prompt }
             ],
-            max_tokens: 500
+            max_tokens: 800
         });
 
         const responseText = completion.choices[0].message.content.trim();
@@ -126,6 +132,10 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
 
         suggestion.xValue = Math.max(0, Math.min(100, suggestion.xValue));
         suggestion.yValue = Math.max(0, Math.min(100, suggestion.yValue));
+
+        if (!suggestion.specifications || typeof suggestion.specifications !== 'object') {
+            suggestion.specifications = {};
+        }
 
         if (suggestion.domain && typeof suggestion.domain === 'string') {
             suggestion.logoUrl = `https://www.google.com/s2/favicons?domain=${suggestion.domain}&sz=128`;

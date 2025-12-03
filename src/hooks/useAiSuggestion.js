@@ -4,7 +4,7 @@ export function useAiSuggestion() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const generateSuggestion = async (products, axes, activeXAxisId, activeYAxisId, constraints = [], projectTitle = '') => {
+    const generateSuggestion = async (products, axes, activeXAxisId, activeYAxisId, constraints = [], projectTitle = '', specifications = []) => {
         setIsLoading(true);
         setError(null);
 
@@ -20,7 +20,8 @@ export function useAiSuggestion() {
                     activeXAxisId,
                     activeYAxisId,
                     constraints,
-                    projectTitle
+                    projectTitle,
+                    specifications
                 }),
             });
 
@@ -78,9 +79,50 @@ export function useAiSuggestion() {
         }
     };
 
+    const enrichProduct = async (productName, domain, axes, activeXAxisId, activeYAxisId, otherProducts, projectTitle = '', constraints = [], specifications = []) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/openai/enrich', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    productName,
+                    domain,
+                    axes,
+                    activeXAxisId,
+                    activeYAxisId,
+                    otherProducts,
+                    projectTitle,
+                    constraints,
+                    specifications
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `API Error: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            setIsLoading(false);
+            return result;
+
+        } catch (err) {
+            console.error('AI Enrichment Error:', err);
+            setError(err.message);
+            setIsLoading(false);
+            throw err;
+        }
+    };
+
     return {
         generateSuggestion,
         positionProduct,
+        enrichProduct,
         isLoading,
         error
     };
