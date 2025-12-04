@@ -1,28 +1,7 @@
-import OpenAI from 'openai';
+import { extractJson, createOpenAIClient, sanitizeResult, handleError } from './shared.js';
 
 export const config = {
     runtime: 'edge',
-};
-
-const extractJson = (text) => {
-    try {
-        return JSON.parse(text);
-    } catch (e) {
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch) {
-            try {
-                return JSON.parse(codeBlockMatch[1]);
-            } catch (e2) { }
-        }
-        const firstBrace = text.indexOf('{');
-        const lastBrace = text.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            try {
-                return JSON.parse(text.substring(firstBrace, lastBrace + 1));
-            } catch (e3) { }
-        }
-        throw new Error(`Failed to parse AI response: ${text.substring(0, 100)}...`);
-    }
 };
 
 export default async function handler(req) {
@@ -32,13 +11,8 @@ export default async function handler(req) {
 
     try {
         const { products, axes, activeXAxisId, activeYAxisId, constraints, projectTitle, specifications } = await req.json();
-        const apiKey = process.env.OPENAI_API_KEY;
 
-        if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), { status: 500 });
-        }
-
-        const openai = new OpenAI({ apiKey });
+        const openai = createOpenAIClient();
 
         const xAxis = axes.find(a => a.id === activeXAxisId);
         const yAxis = axes.find(a => a.id === activeYAxisId);
@@ -130,30 +104,17 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
         const responseText = completion.choices[0].message.content.trim();
         const suggestion = extractJson(responseText);
 
-        if (!suggestion.name || typeof suggestion.xValue !== 'number' || typeof suggestion.yValue !== 'number') {
-            throw new Error('Invalid suggestion format from AI');
+        if (!suggestion.name) {
+            throw new Error('Invalid suggestion format from AI: missing name');
         }
 
-        suggestion.xValue = Math.max(0, Math.min(100, suggestion.xValue));
-        suggestion.yValue = Math.max(0, Math.min(100, suggestion.yValue));
+        const sanitizedSuggestion = sanitizeResult(suggestion);
 
-        if (!suggestion.specifications || typeof suggestion.specifications !== 'object') {
-            suggestion.specifications = {};
-        }
-
-        if (suggestion.domain && typeof suggestion.domain === 'string') {
-            suggestion.logoUrl = `https://www.google.com/s2/favicons?domain=${suggestion.domain}&sz=128`;
-        } else {
-            suggestion.logoUrl = null;
-        }
-
-
-        return new Response(JSON.stringify(suggestion), {
+        return new Response(JSON.stringify(sanitizedSuggestion), {
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error('API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        return handleError(error);
     }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown, FilePlus, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown, FilePlus, CheckCircle2, Trash2 } from 'lucide-react';
 import QuadrantChart from './QuadrantChart';
 import AxisEditor from './AxisEditor';
 import PageEditor from './PageEditor';
@@ -14,7 +14,7 @@ function LayoutContent() {
     const {
         currentFileName, updateFileName,
         pages, activePageId, setActivePageId,
-        isDirty, saveToCloud, fetchQuadrants, loadQuadrant, newProject,
+        isDirty, saveToCloud, fetchQuadrants, loadQuadrant, newProject, deleteQuadrant,
         axes, activeXAxisId, activeYAxisId
     } = useApp();
     const { user, signInWithGoogle, signOut } = useAuth();
@@ -138,6 +138,7 @@ function LayoutContent() {
                         <input
                             value={currentFileName}
                             onChange={(e) => updateFileName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                             className="text-xl font-bold text-slate-800 bg-transparent border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded px-2 py-1 min-w-[10ch] focus:outline-none transition-all"
                             style={{ width: `${Math.max(10, currentFileName.length)}ch` }}
                             placeholder="Untitled"
@@ -250,16 +251,35 @@ function LayoutContent() {
                                             ) : (
                                                 <div className="flex flex-col gap-1">
                                                     {cloudFiles.map(file => (
-                                                        <button
-                                                            key={file.id}
-                                                            onClick={() => loadCloudFile(file.id)}
-                                                            className="text-left px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-md transition-colors truncate"
-                                                        >
-                                                            {file.name}
-                                                            <span className="block text-xs text-slate-400">
-                                                                {new Date(file.updated_at).toLocaleDateString()}
-                                                            </span>
-                                                        </button>
+                                                        <div key={file.id} className="group flex items-center gap-1 pr-2 hover:bg-indigo-50 rounded-md transition-colors">
+                                                            <button
+                                                                onClick={() => loadCloudFile(file.id)}
+                                                                className="flex-1 text-left px-3 py-2 text-sm text-slate-700 truncate"
+                                                            >
+                                                                {file.name}
+                                                                <span className="block text-xs text-slate-400">
+                                                                    {new Date(file.updated_at).toLocaleDateString()}
+                                                                </span>
+                                                            </button>
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm(`Are you sure you want to delete "${file.name}"?`)) {
+                                                                        try {
+                                                                            await deleteQuadrant(file.id);
+                                                                            setCloudFiles(prev => prev.filter(f => f.id !== file.id));
+                                                                        } catch (err) {
+                                                                            console.error(err);
+                                                                            alert('Failed to delete project');
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                                                title="Delete Project"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             )}

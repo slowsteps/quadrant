@@ -14,6 +14,7 @@ export default function QuadrantChart() {
     const resizeTimeout = useRef(null);
     const [isDraggingEnabled, setIsDraggingEnabled] = useState(true);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const [focusedCardIndex, setFocusedCardIndex] = useState(-1);
 
     const xAxis = axes.find(a => a.id === activeXAxisId);
     const yAxis = axes.find(a => a.id === activeYAxisId);
@@ -58,6 +59,31 @@ export default function QuadrantChart() {
             if (resizeTimeout.current) clearTimeout(resizeTimeout.current);
         };
     }, []);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Only handle Tab when not in an input/textarea
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const totalCards = products.length;
+                if (totalCards === 0) return;
+
+                if (e.shiftKey) {
+                    // Shift+Tab: cycle backward
+                    setFocusedCardIndex(prev => prev <= 0 ? totalCards - 1 : prev - 1);
+                } else {
+                    // Tab: cycle forward
+                    setFocusedCardIndex(prev => prev >= totalCards - 1 ? 0 : prev + 1);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [products.length]);
 
     const handleDragEnd = (productId, info, initialX, initialY) => {
         if (!containerRef.current) return;
@@ -163,7 +189,7 @@ export default function QuadrantChart() {
 
             {/* Chart Area */}
             <div ref={containerRef} className="flex-1 relative m-12 border border-slate-100 rounded-lg bg-slate-50/30">
-                {dimensions.width > 0 && dimensions.height > 0 && products.map(product => {
+                {dimensions.width > 0 && dimensions.height > 0 && products.map((product, index) => {
                     // Default to 50 if axis value not set
                     const valX = product.axisValues[activeXAxisId] ?? 50;
                     const valY = product.axisValues[activeYAxisId] ?? 50;
@@ -195,6 +221,8 @@ export default function QuadrantChart() {
                             containerRef={containerRef}
                             onDragEnd={(e, info) => handleDragEnd(product.id, info, centeredX, centeredY)}
                             isDraggingEnabled={isDraggingEnabled}
+                            isFocused={index === focusedCardIndex}
+                            onFocus={() => setFocusedCardIndex(index)}
                         />
                     );
                 })}

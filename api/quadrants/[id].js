@@ -50,5 +50,35 @@ export default async function handler(req) {
         });
     }
 
+    if (req.method === 'DELETE') {
+        // Verify ownership before deleting
+        const { data: existing, error: fetchError } = await supabase
+            .from('quadrants')
+            .select('user_id')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            return new Response(JSON.stringify({ error: fetchError.message }), { status: 500 });
+        }
+
+        if (existing.user_id !== user.id) {
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
+        }
+
+        const { error } = await supabase
+            .from('quadrants')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
     return new Response('Method Not Allowed', { status: 405 });
 }

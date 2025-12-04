@@ -23,6 +23,7 @@ export function AppProvider({ children }) {
     const [activePageId, setActivePageId] = useState('default');
 
     const [currentFileName, setCurrentFileName] = useState('Untitled project');
+    const [currentCloudId, setCurrentCloudId] = useState(null);
     const [fileHandle, setFileHandle] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
     const [constraints, setConstraints] = useState([]);
@@ -49,6 +50,7 @@ export function AppProvider({ children }) {
         setPages([{ id: 'default', title: 'Page 1', xAxisId: 'price', yAxisId: 'quality', backgroundColor: '#f8fafc' }]);
         setActivePageId('default');
         setCurrentFileName('Untitled project');
+        setCurrentCloudId(null);
         setFileHandle(null);
         setIsDirty(false);
         setConstraints([]);
@@ -173,7 +175,7 @@ export function AppProvider({ children }) {
     };
 
     // Persistence
-    const loadData = (data, fileName, handle = null) => {
+    const loadData = (data, fileName, handle = null, id = null) => {
         if (data.axes) setAxes(data.axes);
         if (data.products) setProducts(data.products);
         if (data.constraints) setConstraints(data.constraints);
@@ -200,6 +202,7 @@ export function AppProvider({ children }) {
 
         if (fileName) setCurrentFileName(fileName.replace('.json', ''));
         if (handle) setFileHandle(handle);
+        if (id) setCurrentCloudId(id);
         setIsDirty(false);
     };
 
@@ -228,18 +231,9 @@ export function AppProvider({ children }) {
             data: data
         };
 
-        // If we have a fileHandle (which acts as ID in this context if we were using file system, but here we rely on name/ID logic in backend)
-        // Actually, the backend logic tries to find by name if ID isn't provided.
-        // But wait, we don't store the ID in the state explicitly except maybe in fileHandle?
-        // No, fileHandle is for File System Access API.
-        // We should probably store the cloud ID if we have it.
-        // For now, let's rely on the backend's upsert logic by name, or if we loaded it, we might want to keep the ID.
-        // Let's check if we have an ID stored. We don't seem to store the cloud ID in the state.
-        // The backend logic:
-        // if (id) payload.id = id;
-        // else find by name and user_id.
-
-        // So sending name is enough for upserting by name.
+        if (currentCloudId) {
+            payload.id = currentCloudId;
+        }
 
         const response = await fetch('/api/quadrants', {
             method: 'POST',
@@ -253,6 +247,11 @@ export function AppProvider({ children }) {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || 'Failed to save');
+        }
+
+        const savedData = await response.json();
+        if (savedData && savedData.id) {
+            setCurrentCloudId(savedData.id);
         }
 
         setIsDirty(false);
@@ -295,8 +294,26 @@ export function AppProvider({ children }) {
         const data = await response.json();
 
         if (data && data.data) {
-            loadData(data.data, data.name);
+            loadData(data.data, data.name, null, data.id);
         }
+    };
+
+    const deleteQuadrant = async (id) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No active session');
+
+        const response = await fetch(`/api/quadrants/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete quadrant');
+        }
+
+        return true;
     };
 
     // Compatibility setters for Controls component
@@ -334,7 +351,7 @@ export function AppProvider({ children }) {
             currentFileName, setCurrentFileName, updateFileName,
             fileHandle, setFileHandle,
             isDirty, setIsDirty, isSaving, // Expose isSaving
-            saveToCloud, fetchQuadrants, loadQuadrant,
+            saveToCloud, fetchQuadrants, loadQuadrant, deleteQuadrant,
             constraints, setConstraints,
             specifications, setSpecifications,
             restrictToUserSpecs, setRestrictToUserSpecs,

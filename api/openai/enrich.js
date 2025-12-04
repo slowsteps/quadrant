@@ -1,28 +1,7 @@
-import OpenAI from 'openai';
+import { extractJson, createOpenAIClient, sanitizeResult, handleError } from './shared.js';
 
 export const config = {
     runtime: 'edge',
-};
-
-const extractJson = (text) => {
-    try {
-        return JSON.parse(text);
-    } catch (e) {
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch) {
-            try {
-                return JSON.parse(codeBlockMatch[1]);
-            } catch (e2) { }
-        }
-        const firstBrace = text.indexOf('{');
-        const lastBrace = text.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            try {
-                return JSON.parse(text.substring(firstBrace, lastBrace + 1));
-            } catch (e3) { }
-        }
-        throw new Error(`Failed to parse AI response: ${text.substring(0, 100)}...`);
-    }
 };
 
 export default async function handler(req) {
@@ -32,13 +11,8 @@ export default async function handler(req) {
 
     try {
         const { productName, domain, axes, activeXAxisId, activeYAxisId, otherProducts, projectTitle, constraints, specifications } = await req.json();
-        const apiKey = process.env.OPENAI_API_KEY;
 
-        if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), { status: 500 });
-        }
-
-        const openai = new OpenAI({ apiKey });
+        const openai = createOpenAIClient();
 
         const xAxis = axes.find(a => a.id === activeXAxisId);
         const yAxis = axes.find(a => a.id === activeYAxisId);
@@ -112,35 +86,13 @@ Respond ONLY in JSON:
         const responseText = completion.choices[0].message.content.trim();
         const result = extractJson(responseText);
 
-        if (typeof result.xValue !== 'number' || typeof result.yValue !== 'number') {
-            throw new Error('Invalid coordinates from AI');
-        }
+        const sanitizedResult = sanitizeResult(result);
 
-        if (!result.usps || !Array.isArray(result.usps)) {
-            result.usps = [];
-        }
-
-        if (!result.specifications || typeof result.specifications !== 'object') {
-            result.specifications = {};
-        }
-
-        result.xValue = Math.max(0, Math.min(100, result.xValue));
-        result.yValue = Math.max(0, Math.min(100, result.yValue));
-
-        // Generate logo URL from domain
-        if (result.domain && typeof result.domain === 'string') {
-            result.logoUrl = `https://www.google.com/s2/favicons?domain=${result.domain}&sz=128`;
-        } else {
-            result.logoUrl = null;
-        }
-
-
-        return new Response(JSON.stringify(result), {
+        return new Response(JSON.stringify(sanitizedResult), {
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error('API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        return handleError(error);
     }
 }

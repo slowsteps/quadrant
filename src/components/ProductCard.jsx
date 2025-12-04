@@ -4,9 +4,10 @@ import { Pencil, Trash2, Check, X, Sparkles, Loader2, ExternalLink } from 'lucid
 import { useApp } from '../context/AppContext';
 import { useAiSuggestion } from '../hooks/useAiSuggestion';
 
-export default function ProductCard({ product, x, y, containerRef, onDragEnd, isDraggingEnabled = true }) {
+export default function ProductCard({ product, x, y, containerRef, onDragEnd, isDraggingEnabled = true, isFocused = false, onFocus = () => { } }) {
     const { updateProduct, deleteProduct, activeXAxisId, activeYAxisId, currentFileName } = useApp();
     const [isEditing, setIsEditing] = useState(false);
+    const [showHoverActions, setShowHoverActions] = useState(true);
     const [editName, setEditName] = useState(product.name);
     const [editUrl, setEditUrl] = useState(product.url || '');
     const [editLogoUrl, setEditLogoUrl] = useState(product.logoUrl || '');
@@ -82,6 +83,46 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
         if (isEditing) {
             setIsClicking(false);
         }
+    }, [isEditing]);
+
+    // Manage hover actions visibility with delay
+    useEffect(() => {
+        if (isEditing) {
+            // Hide immediately when opening
+            setShowHoverActions(false);
+        } else {
+            // Show after animation completes when closing
+            const timer = setTimeout(() => {
+                setShowHoverActions(true);
+            }, 300); // Match the animation duration
+            return () => clearTimeout(timer);
+        }
+    }, [isEditing]);
+
+    // Handle Enter key when focused
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (isFocused && !isEditing && e.key === 'Enter') {
+                e.preventDefault();
+                setIsEditing(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFocused, isEditing]);
+
+    // Handle Escape key to close edit mode
+    useEffect(() => {
+        const handleEscapeKey = (e) => {
+            if (isEditing && e.key === 'Escape') {
+                e.preventDefault();
+                handleCancelEdit();
+            }
+        };
+
+        window.addEventListener('keydown', handleEscapeKey);
+        return () => window.removeEventListener('keydown', handleEscapeKey);
     }, [isEditing]);
 
     const handleSaveName = async () => {
@@ -230,8 +271,9 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             }}
             style={{ touchAction: 'none' }}
             className={`absolute top-0 left-0 cursor-grab active:cursor-grabbing group ${isEditing ? 'z-50' : 'z-10 hover:z-20'}`}
+            onClick={onFocus}
         >
-            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all`}>
+            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${isFocused && !isEditing ? 'ring-2 ring-indigo-400' : ''}`}>
                 {isEditing ? (
                     <div className="flex flex-col gap-2 w-full">
                         {/* Close Button */}
@@ -358,7 +400,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 )}
 
                 {/* Hover Actions */}
-                {!isEditing && (
+                {!isEditing && showHoverActions && (
                     <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                         <button
                             onClick={() => setIsEditing(true)}
