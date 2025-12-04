@@ -101,7 +101,7 @@ Suggest ONE REAL, EXISTING competing product or company that belongs in the ${ta
 3. Fill a gap or represent a different strategic position
 4. The company's primary domain name (e.g., "slack.com", "microsoft.com") for logo fetching
 5. STRICTLY ADHERE to the provided constraints.
-6. Provide ${specifications && specifications.length > 0 ? `${Math.min(10, specifications.length + 5)}` : '5'} key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Examples: "Range: 300km", "Origin: USA", "Market Cap: $50B". Max 5 words each. **ALWAYS use METRIC units** (km not miles, kg not lbs, °C not °F).
+6. Provide ${specifications && specifications.length > 0 ? `${Math.min(10, specifications.length + 5)}` : '5'} key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Max 3 words each. **ALWAYS use METRIC units** (km not miles, kg not lbs, °C not °F).
 ${specifications && specifications.length > 0 ? `7. Provide specification values for: ${specifications.join(', ')}. For brands, provide marketer-relevant data like Founded, Employees, Revenue, HQ Location.` : ''}
 
 Respond ONLY in this exact JSON format (no markdown, no explanation):

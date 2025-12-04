@@ -134,14 +134,6 @@ Respond ONLY in JSON:
             result.logoUrl = null;
         }
 
-        // Log which specifications were provided
-        if (enableWebSearch && result.specifications && Object.keys(result.specifications).length > 0) {
-            console.log(`Specifications provided for ${productName}:`);
-            Object.entries(result.specifications).forEach(([key, value]) => {
-                console.log(`  - ${key}: ${value}`);
-            });
-            console.log('');
-        }
 
         return new Response(JSON.stringify(result), {
             headers: { 'Content-Type': 'application/json' }
