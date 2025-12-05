@@ -1,6 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
-import { LayoutGrid } from 'lucide-react';
+
+import logo from '../assets/logocat.png';
 
 export default function WelcomePage() {
     const { signInWithGoogle } = useAuth();
@@ -8,12 +10,12 @@ export default function WelcomePage() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100">
-                <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-200">
-                    <LayoutGrid className="text-white w-8 h-8" />
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100 overflow-hidden p-2">
+                    <img src={logo} alt="usemap.io logo" className="w-full h-full object-contain bg-white" />
                 </div>
 
                 <h1 className="text-3xl font-bold text-slate-900 mb-3">
-                    Product Quadrant Mapper
+                    usemap.io
                 </h1>
 
                 <p className="text-slate-600 mb-8 text-lg">
@@ -33,7 +35,10 @@ export default function WelcomePage() {
                 </button>
 
                 <p className="mt-6 text-xs text-slate-400">
-                    By continuing, you agree to our Terms of Service and Privacy Policy.
+                    By continuing, you agree to our{' '}
+                    <Link to="/terms" className="underline hover:text-slate-600 transition-colors">Terms of Service</Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="underline hover:text-slate-600 transition-colors">Privacy Policy</Link>.
                 </p>
             </div>
         </div>

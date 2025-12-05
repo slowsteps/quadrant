@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutGrid, Settings, Save, History, Loader2, ChevronDown, FilePlus, CheckCircle2, Trash2 } from 'lucide-react';
+import { Settings, Save, History, Loader2, ChevronDown, FilePlus, CheckCircle2, Trash2 } from 'lucide-react';
+import logo from '../assets/logocat.png';
 import QuadrantChart from './QuadrantChart';
 import AxisEditor from './AxisEditor';
 import PageEditor from './PageEditor';
@@ -128,12 +129,13 @@ function LayoutContent() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
             <OnboardingModal />
+
             {/* Header */}
             <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-20 shrink-0">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
-                        <div className="bg-indigo-600 p-2 rounded-lg shadow-indigo-200 shadow-md">
-                            <LayoutGrid className="text-white w-6 h-6" />
+                        <div className="bg-white p-1 rounded-lg border border-slate-100 shadow-sm overflow-hidden w-10 h-10 flex items-center justify-center">
+                            <img src={logo} alt="Logo" className="w-full h-full object-contain bg-white" />
                         </div>
                         <input
                             value={currentFileName}
