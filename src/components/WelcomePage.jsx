@@ -34,13 +34,16 @@ export default function WelcomePage() {
                     Continue with Google
                 </button>
 
-                <p className="mt-6 text-xs text-slate-400">
-                    By continuing, you agree to our{' '}
-                    <Link to="/terms" className="underline hover:text-slate-600 transition-colors">Terms of Service</Link>
-                    {' '}and{' '}
-                    <Link to="/privacy" className="underline hover:text-slate-600 transition-colors">Privacy Policy</Link>.
-                </p>
+
             </div>
+
+            <footer className="mt-12 text-center text-sm text-slate-400">
+                <div className="flex gap-6 justify-center">
+                    <Link to="/privacy" className="hover:text-slate-600 transition-colors">Privacy Policy</Link>
+                    <Link to="/terms" className="hover:text-slate-600 transition-colors">Terms of Service</Link>
+                </div>
+                <p className="mt-4 opacity-70">&copy; {new Date().getFullYear()} usemap.io</p>
+            </footer>
         </div>
     );
 }
