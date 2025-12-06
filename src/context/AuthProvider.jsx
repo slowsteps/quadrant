@@ -11,7 +11,10 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Check active sessions and sets the user
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) {
+                console.warn('Supabase auth session error:', error.message)
+            }
             setUser(session?.user ?? null)
             setLoading(false)
         })

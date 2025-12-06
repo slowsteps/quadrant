@@ -24,7 +24,12 @@ export default async function handler(req) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+        console.error('Auth Error:', authError);
+        return new Response(JSON.stringify({
+            error: 'Unauthorized',
+            details: authError?.message || 'No user found',
+            hint: 'Check if the token is valid and not expired'
+        }), { status: 401 });
     }
 
     if (req.method === 'GET') {
