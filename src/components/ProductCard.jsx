@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, Trash2, Check, X, Sparkles, Loader2, ExternalLink } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAiSuggestion } from '../hooks/useAiSuggestion';
@@ -282,136 +282,151 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 layout: { duration: 0.2 }
             }}
             style={{ touchAction: 'none' }}
-            className={`absolute top-0 left-0 cursor-grab active:cursor-grabbing group ${isEditing ? 'z-50' : 'z-10 hover:z-20'}`}
-            onClick={onFocus}
+            className={`absolute top-0 left-0 cursor-grab active:cursor-grabbing group origin-top ${isEditing ? 'z-50' : 'z-10 hover:z-20'}`}
+            onClick={(e) => {
+                e.stopPropagation();
+                onFocus();
+            }}
         >
             <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${showUpdateAnim ? 'ring-2 ring-emerald-400 scale-105' : (isFocused && !isEditing ? 'ring-2 ring-indigo-400' : '')}`}>
-                {isEditing ? (
-                    <div className="flex flex-col gap-2 w-full">
-                        {/* Close Button */}
-                        {!isClicking && (
-                            <button
-                                onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setIsClicking(true);
-                                    setIsEditing(false);
-                                    handleSaveName();
-                                }}
-                                className="absolute -top-2 -right-2 p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors z-20"
-                            >
-                                <X size={12} />
-                            </button>
-                        )}
 
-                        {/* Show logo in edit mode if available */}
-                        {product.logoUrl && (
-                            <img
-                                src={product.logoUrl}
-                                alt="Logo"
-                                className="w-8 h-8 object-contain self-center"
-                                onError={(e) => e.target.style.display = 'none'}
-                            />
-                        )}
+                {/* Persistent Header: Logo & Name */}
+                <div
+                    className="flex flex-col items-center gap-2 w-full"
+                    onDoubleClick={() => !isEditing && setIsEditing(true)}
+                >
+                    {/* Logo (show from product if available, or if editing and we have one) */}
+                    {(product.logoUrl || (isEditing && editLogoUrl)) && (
+                        <img
+                            src={isEditing ? editLogoUrl : product.logoUrl}
+                            alt={product.name}
+                            className="w-8 h-8 object-contain select-none pointer-events-none"
+                            onError={(e) => e.target.style.display = 'none'}
+                        />
+                    )}
+
+                    {/* Name: Input when editing, Div when viewing, but identical styling */}
+                    {isEditing ? (
                         <input
                             ref={inputRef}
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Product Name"
-                            className="w-full text-sm font-medium text-slate-800 bg-white border border-transparent hover:border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors"
+                            className="w-full text-sm font-bold text-slate-800 bg-white border border-transparent hover:border-slate-300 rounded px-1 py-0.5 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors break-words"
                         />
-                        {/* Hidden logo input, auto-handled */}
-                        <div className="flex flex-wrap gap-1 justify-center my-2">
-                            {colors.map((c, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => handleColorSelect(c)}
-                                    className={`w-4 h-4 rounded-full ${c.bg} border ${c.border} hover:scale-125 transition-transform`}
-                                />
-                            ))}
-                        </div>
-                        <div className="flex gap-2 justify-center w-full">
-                            <button
-                                onClick={handleEnrichProduct}
-                                disabled={isAiLoading || !editName.trim()}
-                                className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 disabled:opacity-50 w-full justify-center"
-                                title="Refresh data with AI"
-                            >
-                                {isAiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                <span>Refresh</span>
-                            </button>
-                        </div>
-                        <div className="relative w-full">
-                            <input
-                                value={editUrl}
-                                onChange={(e) => setEditUrl(e.target.value)}
-                                onBlur={async () => {
-                                    // Enrich when domain changes
-                                    if (editUrl.trim() && editUrl.trim() !== product.url && editName.trim() && editName.trim() !== 'Untitled Product') {
-                                        await handleEnrichProduct();
-                                    }
-                                }}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Product URL (optional)"
-                                className="w-full text-[10px] text-slate-500 bg-transparent border border-transparent hover:border-slate-200 rounded px-2 py-1 pr-6 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors"
-                            />
-                            {editUrl && (
-                                <a
-                                    href={editUrl.startsWith('http') ? editUrl : `https://${editUrl}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
-                                    title="Open in new tab"
-                                >
-                                    <ExternalLink size={10} />
-                                </a>
-                            )}
-                        </div>
-                        {/* Unified Specifications in edit mode */}
-                        {(product.usps?.length > 0 || Object.keys(product.specifications || {}).length > 0) && (
-                            <div className="w-full mt-1 pt-1 border-t border-slate-100">
-                                <div className="text-[10px] font-bold text-slate-400 mb-1">Specifications:</div>
-                                <div className="text-[10px] text-slate-500 text-left space-y-0.5">
-                                    {!restrictToUserSpecs && product.usps?.map((usp, i) => (
-                                        <div key={`usp-${i}`} className="pl-1 flex items-start gap-1">
-                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
-                                            <span className="text-slate-500 font-medium">{usp}</span>
-                                        </div>
-                                    ))}
-                                    {Object.entries(product.specifications || {})
-                                        .filter(([key]) => !restrictToUserSpecs || specifications.some(s => s.toLowerCase() === key.toLowerCase()))
-                                        .map(([key, value], i) => (
-                                            <div key={`spec-${i}`} className="pl-1 flex items-start gap-1">
-                                                <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
-                                                <span className="text-slate-500">
-                                                    {key}: <span className="font-medium text-slate-700">{value}</span>
-                                                </span>
-                                            </div>
-                                        ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div
-                        className="flex flex-col items-center gap-2 w-full"
-                        onDoubleClick={() => setIsEditing(true)}
-                    >
-                        {product.logoUrl && (
-                            <img
-                                src={product.logoUrl}
-                                alt={product.name}
-                                className="w-8 h-8 object-contain select-none pointer-events-none"
-                                onError={(e) => e.target.style.display = 'none'}
-                            />
-                        )}
-                        <div className="text-sm font-bold text-slate-800 text-center break-words w-full px-1 select-none">
+                    ) : (
+                        <div className="text-sm font-bold text-slate-800 text-center break-words w-full px-1 py-0.5 select-none border border-transparent">
                             {product.name}
                         </div>
-                    </div>
+                    )}
+                </div>
+
+                {/* Collapsible Details Drawer */}
+                {isEditing && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="w-full overflow-hidden"
+                    >
+                        <div className="flex flex-col gap-2 pt-2">
+                            {/* Close Button */}
+                            {!isClicking && (
+                                <button
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        setIsClicking(true);
+                                        setIsEditing(false);
+                                        handleSaveName();
+                                    }}
+                                    className="absolute -top-2 -right-2 p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors z-20"
+                                >
+                                    <X size={12} />
+                                </button>
+                            )}
+
+                            {/* Color Picker */}
+                            <div className="flex flex-wrap gap-1 justify-center my-1">
+                                {colors.map((c, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => handleColorSelect(c)}
+                                        className={`w-4 h-4 rounded-full ${c.bg} border ${c.border} hover:scale-125 transition-transform`}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Refresh Button */}
+                            <div className="flex gap-2 justify-center w-full">
+                                <button
+                                    onClick={handleEnrichProduct}
+                                    disabled={isAiLoading || !editName.trim()}
+                                    className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 disabled:opacity-50 w-full justify-center"
+                                    title="Refresh data with AI"
+                                >
+                                    {isAiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                    <span>Refresh</span>
+                                </button>
+                            </div>
+
+                            {/* URL Input */}
+                            <div className="relative w-full">
+                                <input
+                                    value={editUrl}
+                                    onChange={(e) => setEditUrl(e.target.value)}
+                                    onBlur={async () => {
+                                        // Enrich when domain changes
+                                        if (editUrl.trim() && editUrl.trim() !== product.url && editName.trim() && editName.trim() !== 'Untitled Product') {
+                                            await handleEnrichProduct();
+                                        }
+                                    }}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Product URL (optional)"
+                                    className="w-full text-[10px] text-slate-500 bg-transparent border border-transparent hover:border-slate-200 rounded px-2 py-1 pr-6 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors"
+                                />
+                                {editUrl && (
+                                    <a
+                                        href={editUrl.startsWith('http') ? editUrl : `https://${editUrl}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                        title="Open in new tab"
+                                    >
+                                        <ExternalLink size={10} />
+                                    </a>
+                                )}
+                            </div>
+
+                            {/* Specifications */}
+                            {(product.usps?.length > 0 || Object.keys(product.specifications || {}).length > 0) && (
+                                <div className="w-full mt-1 pt-1 border-t border-slate-100">
+                                    <div className="text-[10px] font-bold text-slate-400 mb-1">Specifications:</div>
+                                    <div className="text-[10px] text-slate-500 text-left space-y-0.5">
+                                        {!restrictToUserSpecs && product.usps?.map((usp, i) => (
+                                            <div key={`usp-${i}`} className="pl-1 flex items-start gap-1">
+                                                <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                                                <span className="text-slate-500 font-medium">{usp}</span>
+                                            </div>
+                                        ))}
+                                        {Object.entries(product.specifications || {})
+                                            .filter(([key]) => !restrictToUserSpecs || specifications.some(s => s.toLowerCase() === key.toLowerCase()))
+                                            .map(([key, value], i) => (
+                                                <div key={`spec-${i}`} className="pl-1 flex items-start gap-1">
+                                                    <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                                                    <span className="text-slate-500">
+                                                        {key}: <span className="font-medium text-slate-700">{value}</span>
+                                                    </span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
                 )}
 
-                {/* Hover Actions */}
+                {/* Hover Actions (Edit/Delete) - Only show when NOT editing */}
                 {!isEditing && showHoverActions && (
                     <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                         <button
@@ -430,8 +445,6 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                         </button>
                     </div>
                 )}
-
-
             </div>
         </motion.div >
     );

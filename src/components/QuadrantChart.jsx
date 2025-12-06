@@ -188,7 +188,11 @@ export default function QuadrantChart() {
             </div>
 
             {/* Chart Area */}
-            <div ref={containerRef} className="flex-1 relative m-12 border border-slate-100 rounded-lg bg-slate-50/30">
+            <div
+                ref={containerRef}
+                className="flex-1 relative m-12 border border-slate-100 rounded-lg bg-slate-50/30"
+                onClick={() => setFocusedCardIndex(-1)}
+            >
                 {dimensions.width > 0 && dimensions.height > 0 && products.map((product, index) => {
                     // Default to 50 if axis value not set
                     const valX = product.axisValues[activeXAxisId] ?? 50;
