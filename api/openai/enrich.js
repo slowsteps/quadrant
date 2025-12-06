@@ -1,4 +1,4 @@
-import { extractJson, createOpenAIClient, sanitizeResult, handleError } from './shared.js';
+import { extractJson, createOpenAIClient, sanitizeResult, handleError, constructPrompt } from './shared.js';
 
 export const config = {
     runtime: 'edge',
@@ -26,48 +26,19 @@ export default async function handler(req) {
                 return `- ${p.name}: ${xAxis.label}=${x}, ${yAxis.label}=${y}`;
             }).join('\n');
 
-        const constraintsText = constraints && constraints.length > 0
-            ? `\nConstraints to consider:\n${constraints.map(c => `- ${c}`).join('\n')}`
-            : '';
-
-        const specificationsText = specifications && specifications.length > 0
-            ? `\nSpecifications to provide:\n${specifications.map(s => `- ${s}`).join('\n')}`
-            : '';
-
-        const prompt = `Enrich the product "${productName}" for a quadrant map${projectTitle ? ` for the project "${projectTitle}"` : ''} defined by:
-X-Axis: ${xAxis.label} (${xAxis.leftLabel} = 0, ${xAxis.rightLabel} = 100)
-Y-Axis: ${yAxis.label} (${yAxis.leftLabel} = 0, ${yAxis.rightLabel} = 100)
-
-Context (other products):
-${context || "No other products yet."}
-${constraintsText}
-${specificationsText}
-
-Based on general knowledge about "${productName}", provide:
-1. xValue (0-100) - position on X-axis
-2. yValue (0-100) - position on Y-axis
-3. domain - the company's primary domain (e.g., "slack.com", "microsoft.com")${domain ? ` - verify or correct: "${domain}"` : ''}
-4. reasoning - brief explanation (max 1 sentence)
-5. usps - ${specifications && specifications.length > 0 ? `${Math.min(10, specifications.length + 5)}` : '5'} key highlights (mix of specs and USPs, avoid marketing fluff). Examples: "Range: 300km", "Origin: USA", "Market Cap: $50B". Max 5 words each.
-${specifications && specifications.length > 0 ? `6. specifications - object with values for: ${specifications.join(', ')}. For brands (not specific products), provide marketer-relevant data like Founded, Employees, Revenue, HQ Location. For products, provide product-specific specs.` : ''}
-
-IMPORTANT:
-- Use the FULL range from 0 to 100 for positioning
-- 0 means extremely "${xAxis.leftLabel}" and 100 means extremely "${xAxis.rightLabel}"
-- Do NOT default to 50
-- Example: A very cheap product should be close to 0 on a Price axis (Low-High)
-- Provide the actual company domain, not a generic one
-- **ALWAYS use METRIC units** (km not miles, kg not lbs, °C not °F, etc.)
-- For brands vs products: If "${productName}" is a brand/company name, provide brand-level specifications (e.g., Founded, Employees, Revenue). If it's a specific product, provide product specifications.
-
-Respond ONLY in JSON:
-{
-  "xValue": 15,
-  "yValue": 85,
-  "domain": "example.com",
-  "reasoning": "...",
-  "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"${specifications && specifications.length > 0 ? ', "USP 6", "USP 7", "USP 8", "USP 9", "USP 10"' : ''}]${specifications && specifications.length > 0 ? `,\n  "specifications": { "Founded": "2008", "Employees": "50,000+", "Revenue": "$10B" }` : ''}
-}`;
+        const prompt = constructPrompt({
+            type: 'enrich',
+            params: {
+                productName,
+                domain,
+                projectTitle,
+                xAxis,
+                yAxis,
+                context,
+                constraints,
+                specifications
+            }
+        });
 
         const messages = [
             { role: "system", content: "You are a product expert. Respond with valid JSON only. Always use metric units." },
@@ -75,7 +46,7 @@ Respond ONLY in JSON:
         ];
 
         const completionConfig = {
-            model: "gpt-4o-mini",
+            model: "gpt-4.1-mini",
             messages: messages,
             temperature: 0.5,
             max_tokens: 800

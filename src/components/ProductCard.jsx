@@ -249,6 +249,18 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
         }
     };
 
+    const [showUpdateAnim, setShowUpdateAnim] = useState(false);
+    const prevLastEnriched = useRef(product.lastEnriched);
+
+    useEffect(() => {
+        if (product.lastEnriched && product.lastEnriched !== prevLastEnriched.current) {
+            setShowUpdateAnim(true);
+            const timer = setTimeout(() => setShowUpdateAnim(false), 2000);
+            prevLastEnriched.current = product.lastEnriched;
+            return () => clearTimeout(timer);
+        }
+    }, [product.lastEnriched]);
+
     return (
         <motion.div
             ref={cardRef}
@@ -273,7 +285,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             className={`absolute top-0 left-0 cursor-grab active:cursor-grabbing group ${isEditing ? 'z-50' : 'z-10 hover:z-20'}`}
             onClick={onFocus}
         >
-            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${isFocused && !isEditing ? 'ring-2 ring-indigo-400' : ''}`}>
+            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${showUpdateAnim ? 'ring-2 ring-emerald-400 scale-105' : (isFocused && !isEditing ? 'ring-2 ring-indigo-400' : '')}`}>
                 {isEditing ? (
                     <div className="flex flex-col gap-2 w-full">
                         {/* Close Button */}

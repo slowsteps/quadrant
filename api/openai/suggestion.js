@@ -1,4 +1,4 @@
-import { extractJson, createOpenAIClient, sanitizeResult, handleError } from './shared.js';
+import { extractJson, createOpenAIClient, sanitizeResult, handleError, constructPrompt } from './shared.js';
 
 export const config = {
     runtime: 'edge',
@@ -45,48 +45,20 @@ export default async function handler(req) {
             case 'bottomLeft': targetDescription = `Low ${xAxis.label} and Low ${yAxis.label}`; break;
         }
 
-        const specificationsText = specifications && specifications.length > 0
-            ? `\nSpecifications to provide:\n${specifications.map(s => `- ${s}`).join('\n')}`
-            : '';
-
-        const prompt = `You are analyzing a product quadrant map${projectTitle ? ` for the project "${projectTitle}"` : ''}. The current products and their positions are:
-
-${productContext}
-
-The axes are:
-- X-axis: ${xAxis.label} (${xAxis.leftLabel} = 0, ${xAxis.rightLabel} = 100)
-- Y-axis: ${yAxis.label} (${yAxis.leftLabel} = 0, ${yAxis.rightLabel} = 100)
-
-Current distribution:
-- Top-Right (High/High): ${quadrants.topRight} products
-- Top-Left (Low/High): ${quadrants.topLeft} products
-- Bottom-Right (High/Low): ${quadrants.bottomRight} products
-- Bottom-Left (Low/Low): ${quadrants.bottomLeft} products
-
-The ${targetQuadrant} quadrant (${targetDescription}) is currently underrepresented.
-
-Constraints (MUST FOLLOW):
-${constraints && constraints.length > 0 ? constraints.map(c => `- ${c}`).join('\n') : "None"}
-${specificationsText}
-
-Suggest ONE REAL, EXISTING competing product or company that belongs in the ${targetQuadrant} quadrant (${targetDescription}) to balance the map. Consider:
-1. A REAL product or companythat actually exists (do not make up fake names)
-2. Appropriate positioning specifically in the ${targetQuadrant} area
-3. Fill a gap or represent a different strategic position
-4. The company's primary domain name (e.g., "slack.com", "microsoft.com") for logo fetching
-5. STRICTLY ADHERE to the provided constraints.
-6. Provide ${specifications && specifications.length > 0 ? `${Math.min(10, specifications.length + 5)}` : '5'} key specifications or factual highlights (mix of specs and USPs, avoid marketing fluff). Max 3 words each. **ALWAYS use METRIC units** (km not miles, kg not lbs, °C not °F).
-${specifications && specifications.length > 0 ? `7. Provide specification values for: ${specifications.join(', ')}. For brands, provide marketer-relevant data like Founded, Employees, Revenue, HQ Location.` : ''}
-
-Respond ONLY in this exact JSON format (no markdown, no explanation):
-{
-  "name": "Product Name",
-  "domain": "example.com",
-  "xValue": 75,
-  "yValue": 50,
-  "reasoning": "Brief explanation of why this product fits here",
-  "usps": ["USP 1", "USP 2", "USP 3", "USP 4", "USP 5"${specifications && specifications.length > 0 ? ', "USP 6", "USP 7", "USP 8", "USP 9", "USP 10"' : ''}]${specifications && specifications.length > 0 ? `,\n  "specifications": { "Founded": "2008", "Employees": "50,000+", "Revenue": "$10B" }` : ''}
-}`;
+        const prompt = constructPrompt({
+            type: 'suggestion',
+            params: {
+                projectTitle,
+                xAxis,
+                yAxis,
+                context: productContext,
+                constraints,
+                specifications,
+                targetQuadrant,
+                targetDescription,
+                quadrantStats: quadrants
+            }
+        });
 
         const messages = [
             { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only. Always use metric units." },
@@ -94,7 +66,7 @@ Respond ONLY in this exact JSON format (no markdown, no explanation):
         ];
 
         const completionConfig = {
-            model: "gpt-4o-mini",
+            model: "gpt-4.1-mini",
             messages: messages,
             max_tokens: 800
         };

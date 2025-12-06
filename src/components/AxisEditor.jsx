@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
+import { Plus, Trash2, Save, X, Pencil, RotateCw, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAiSuggestion } from '../hooks/useAiSuggestion';
 
 export default function AxisEditor({ onClose }) {
-    const { axes, addAxis, updateAxis, deleteAxis, constraints, setConstraints, specifications, setSpecifications, restrictToUserSpecs, setRestrictToUserSpecs } = useApp();
+    const { axes, addAxis, updateAxis, deleteAxis, products, updateProduct, updateProductAxisValues, activeXAxisId, activeYAxisId, currentFileName, constraints, setConstraints, specifications, setSpecifications, restrictToUserSpecs, setRestrictToUserSpecs } = useApp();
+    const { enrichProduct } = useAiSuggestion();
+    const [isRefreshingAll, setIsRefreshingAll] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
     const [newAxis, setNewAxis] = useState({ label: '', leftLabel: '', rightLabel: '' });
     const [newConstraint, setNewConstraint] = useState('');
@@ -41,6 +44,65 @@ export default function AxisEditor({ onClose }) {
         const newSpecs = [...specifications];
         newSpecs.splice(index, 1);
         setSpecifications(newSpecs);
+    };
+
+    const stopRefreshRef = useRef(false);
+
+    const handleStopRefresh = () => {
+        stopRefreshRef.current = true;
+    };
+
+    const handleRefreshAll = async () => {
+        if (products.length === 0 || isRefreshingAll) return;
+
+        setIsRefreshingAll(true);
+        stopRefreshRef.current = false;
+
+        // Process one by one to avoid rate limits and too many parallel requests
+        for (const product of products) {
+            if (stopRefreshRef.current) break;
+
+            try {
+                // Skip if no name
+                if (!product.name || product.name === 'Untitled Product') continue;
+
+                const result = await enrichProduct(
+                    product.name,
+                    product.url || '',
+                    axes,
+                    activeXAxisId,
+                    activeYAxisId,
+                    products.filter(p => p.id !== product.id), // Exclude self from context
+                    currentFileName,
+                    constraints,
+                    specifications
+                );
+
+                if (stopRefreshRef.current) break;
+
+                // Update position
+                updateProductAxisValues(product.id, {
+                    [activeXAxisId]: result.xValue,
+                    [activeYAxisId]: result.yValue
+                });
+
+                // Update all enriched data + timestamp for animation
+                updateProduct(product.id, {
+                    url: result.domain || product.url || '',
+                    logoUrl: result.logoUrl,
+                    reasoning: result.reasoning,
+                    usps: result.usps,
+                    specifications: result.specifications || {},
+                    lastEnriched: Date.now()
+                });
+
+            } catch (err) {
+                console.error(`Failed to refresh ${product.name}:`, err);
+            }
+        }
+
+        setIsRefreshingAll(false);
+        stopRefreshRef.current = false;
     };
 
     return (
@@ -231,6 +293,29 @@ export default function AxisEditor({ onClose }) {
                             />
                             <span className="text-xs text-slate-600 font-medium">Only show these on cards</span>
                         </label>
+
+                        <div className="pt-2">
+                            <button
+                                onClick={isRefreshingAll ? handleStopRefresh : handleRefreshAll}
+                                disabled={!isRefreshingAll && products.length === 0}
+                                className={`w-full flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-xs font-medium transition-all shadow-sm ${isRefreshingAll
+                                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:border-red-300'
+                                    : 'bg-white border-slate-200 hover:border-indigo-300 hover:text-indigo-600 text-slate-600'
+                                    }`}
+                            >
+                                {isRefreshingAll ? (
+                                    <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span>Stop Refreshing</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <RotateCw size={14} />
+                                        <span>Refresh All Products</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

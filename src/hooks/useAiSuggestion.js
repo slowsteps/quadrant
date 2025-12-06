@@ -42,7 +42,7 @@ export function useAiSuggestion() {
         }
     };
 
-    const positionProduct = async (productName, axes, activeXAxisId, activeYAxisId, otherProducts, projectTitle = '') => {
+    const positionProduct = async (productName, axes, activeXAxisId, activeYAxisId, otherProducts, projectTitle = '', constraints = [], specifications = []) => {
         setIsLoading(true);
         setError(null);
 
@@ -58,7 +58,9 @@ export function useAiSuggestion() {
                     activeXAxisId,
                     activeYAxisId,
                     otherProducts,
-                    projectTitle
+                    projectTitle,
+                    constraints,
+                    specifications
                 }),
             });
 
