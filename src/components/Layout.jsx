@@ -340,7 +340,7 @@ function LayoutContent() {
             <main className="flex-1 flex overflow-hidden relative">
                 {/* Chart Area */}
                 <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out">
-                    <div className="border-b border-slate-200 bg-white px-6 py-3 shrink-0">
+                    <div className="border-b border-slate-200 bg-white px-6 py-3 shrink-0 relative z-20">
                         <Controls />
                     </div>
                     <div className="flex-1 p-6 overflow-hidden bg-slate-50/50 relative">

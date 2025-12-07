@@ -67,13 +67,16 @@ export default async function handler(req) {
 
         const completionConfig = {
             model: "gpt-4.1-mini",
-            messages: messages,
-            max_tokens: 800
+            input: messages,
+            tools: [
+                { type: "web_search" },
+            ],
+
         };
 
-        let completion = await openai.chat.completions.create(completionConfig);
+        let response = await openai.responses.create(completionConfig);
 
-        const responseText = completion.choices[0].message.content.trim();
+        const responseText = response.output_text;
         const suggestion = extractJson(responseText);
 
         if (!suggestion.name) {

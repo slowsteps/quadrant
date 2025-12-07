@@ -130,7 +130,7 @@ export function AppProvider({ children }) {
     };
 
     // Product Actions
-    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null, url = null, specifications = {}) => {
+    const addProduct = (name, axisValues = null, logoUrl = null, reasoning = null, usps = null, url = null, specifications = {}, sources = []) => {
         const defaultAxisValues = {};
         axes.forEach(axis => {
             defaultAxisValues[axis.id] = 50;
@@ -145,6 +145,7 @@ export function AppProvider({ children }) {
             reasoning: reasoning || null,
             usps: usps || [],
             specifications: specifications || {},
+            sources: sources || [],
             axisValues: axisValues || defaultAxisValues
         }]);
         setIsDirty(true);

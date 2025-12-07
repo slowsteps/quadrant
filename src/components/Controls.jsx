@@ -36,8 +36,8 @@ export default function Controls() {
                 }
             });
 
-            // Add product with axis values, logo URL, reasoning, USPs, and specifications from AI suggestion
-            addProduct(suggestion.name, axisValues, suggestion.logoUrl || null, suggestion.reasoning || null, suggestion.usps || null, suggestion.domain || null, suggestion.specifications || {});
+            // Add product with axis values, logo URL, reasoning, USPs, specifications, and sources from AI suggestion
+            addProduct(suggestion.name, axisValues, suggestion.logoUrl || null, suggestion.reasoning || null, suggestion.usps || null, suggestion.domain || null, suggestion.specifications || {}, suggestion.sources || []);
         } catch (err) {
             console.error('Failed to generate suggestion:', err);
             setShowError(true);
@@ -62,7 +62,7 @@ export default function Controls() {
                     <button
                         onClick={handleAiSuggestion}
                         disabled={isLoading}
-                        className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white px-5 py-2.5 rounded-full hover:from-indigo-700 hover:to-fuchsia-600 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                        className={`flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-fuchsia-500 text-white px-5 py-2.5 rounded-full hover:from-indigo-700 hover:to-fuchsia-600 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${isLoading ? 'animate-gradient' : ''}`}
                     >
                         {isLoading ? (
                             <>

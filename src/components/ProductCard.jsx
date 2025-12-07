@@ -219,7 +219,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 logoUrl: result.logoUrl,
                 reasoning: result.reasoning,
                 usps: result.usps,
-                specifications: result.specifications || {}
+                specifications: result.specifications || {},
+                sources: result.sources || []
             });
 
             // Update local state
@@ -357,18 +358,6 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                                 ))}
                             </div>
 
-                            {/* Refresh Button */}
-                            <div className="flex gap-2 justify-center w-full">
-                                <button
-                                    onClick={handleEnrichProduct}
-                                    disabled={isAiLoading || !editName.trim()}
-                                    className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 disabled:opacity-50 w-full justify-center"
-                                    title="Refresh data with AI"
-                                >
-                                    {isAiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                    <span>Refresh</span>
-                                </button>
-                            </div>
 
                             {/* URL Input */}
                             <div className="relative w-full">
@@ -422,6 +411,46 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                                     </div>
                                 </div>
                             )}
+
+                            {/* Sources */}
+                            {product.sources?.length > 0 && (
+                                <div className="w-full mt-1 pt-1 border-t border-slate-100">
+                                    <div className="text-[10px] font-bold text-slate-400 mb-1">Sources:</div>
+                                    <div className="text-[10px] text-slate-500 text-left space-y-0.5 max-h-20 overflow-y-auto">
+                                        {product.sources.map((source, i) => (
+                                            <div key={`source-${i}`} className="pl-1 flex items-start gap-1 truncate">
+                                                <span className="mt-1.5 w-1 h-1 rounded-full bg-indigo-300 flex-shrink-0" />
+                                                {source.startsWith('http') ? (
+                                                    <a
+                                                        href={source}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-indigo-500 hover:text-indigo-700 hover:underline truncate"
+                                                        title={source}
+                                                    >
+                                                        {new URL(source).hostname.replace('www.', '')}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-slate-500 truncate">{source}</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Refresh Button (Moved to bottom) */}
+                            <div className="flex gap-2 justify-center w-full mt-2 pt-2 border-t border-slate-100">
+                                <button
+                                    onClick={handleEnrichProduct}
+                                    disabled={isAiLoading || !editName.trim()}
+                                    className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1.5 rounded border border-indigo-100 hover:bg-indigo-100 disabled:opacity-50 w-full justify-center"
+                                    title="Refresh data with AI"
+                                >
+                                    {isAiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                    <span>Refresh Data</span>
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 )}

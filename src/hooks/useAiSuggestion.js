@@ -42,44 +42,7 @@ export function useAiSuggestion() {
         }
     };
 
-    const positionProduct = async (productName, axes, activeXAxisId, activeYAxisId, otherProducts, projectTitle = '', constraints = [], specifications = []) => {
-        setIsLoading(true);
-        setError(null);
 
-        try {
-            const response = await fetch('/api/openai/position', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    productName,
-                    axes,
-                    activeXAxisId,
-                    activeYAxisId,
-                    otherProducts,
-                    projectTitle,
-                    constraints,
-                    specifications
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `API Error: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            setIsLoading(false);
-            return result;
-
-        } catch (err) {
-            console.error('AI Positioning Error:', err);
-            setError(err.message);
-            setIsLoading(false);
-            throw err;
-        }
-    };
 
     const enrichProduct = async (productName, domain, axes, activeXAxisId, activeYAxisId, otherProducts, projectTitle = '', constraints = [], specifications = []) => {
         setIsLoading(true);
@@ -123,7 +86,6 @@ export function useAiSuggestion() {
 
     return {
         generateSuggestion,
-        positionProduct,
         enrichProduct,
         isLoading,
         error
