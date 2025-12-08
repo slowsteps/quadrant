@@ -156,9 +156,9 @@ Task:
 Suggest ONE REAL, EXISTING competing product/company for the ${targetQuadrant} quadrant.
 - Must be REAL.
 - Must fit the quadrant.
-- **DO NOT** suggest products already listed below in Context.
+- **DO NOT** suggest products with idential or very similar names to those listed below in Active products.
 
-Context:
+Active products:
 ${context}
 
 Provide details for the suggested product:

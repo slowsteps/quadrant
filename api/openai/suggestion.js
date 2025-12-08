@@ -20,7 +20,8 @@ export default async function handler(req) {
         const productContext = products.map(p => {
             const xValue = p.axisValues[activeXAxisId] || 50;
             const yValue = p.axisValues[activeYAxisId] || 50;
-            return `- ${p.name}: ${xAxis.label}=${xValue}/100 (${xAxis.leftLabel} to ${xAxis.rightLabel}), ${yAxis.label}=${yValue}/100 (${yAxis.leftLabel} to ${yAxis.rightLabel})`;
+            // return `- ${p.name}: ${xAxis.label}=${xValue}/100 (${xAxis.leftLabel} to ${xAxis.rightLabel}), ${yAxis.label}=${yValue}/100 (${yAxis.leftLabel} to ${yAxis.rightLabel})`;
+            return `- ${p.name}`;
         }).join('\n');
 
         const quadrants = { topRight: 0, topLeft: 0, bottomRight: 0, bottomLeft: 0 };
@@ -60,6 +61,8 @@ export default async function handler(req) {
             }
         });
 
+        console.log("prompt: " + prompt);
+
         const messages = [
             { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only. Always use metric units." },
             { role: "user", content: prompt }
@@ -69,7 +72,7 @@ export default async function handler(req) {
             model: "gpt-4.1-mini",
             input: messages,
             tools: [
-                { type: "web_search" },
+                // { type: "web_search" },
             ],
 
         };

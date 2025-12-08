@@ -292,7 +292,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
             <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${showUpdateAnim ? 'ring-2 ring-emerald-400 scale-105' : (isFocused && !isEditing ? 'ring-2 ring-indigo-400' : '')}`}>
 
                 {/* Persistent Header: Logo & Name */}
-                <div
+                <motion.div
+                    layout={false}
                     className="flex flex-col items-center gap-2 w-full"
                     onDoubleClick={() => !isEditing && setIsEditing(true)}
                 >
@@ -321,7 +322,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             {product.name}
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 {/* Collapsible Details Drawer */}
                 {isEditing && (
@@ -329,6 +330,9 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{
+                            opacity: { delay: 0.2, duration: 0.15 }
+                        }}
                         className="w-full overflow-hidden"
                     >
                         <div className="flex flex-col gap-2 pt-2">

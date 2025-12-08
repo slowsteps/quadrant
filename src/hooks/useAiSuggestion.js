@@ -8,6 +8,7 @@ export function useAiSuggestion() {
         setIsLoading(true);
         setError(null);
 
+
         try {
             const response = await fetch('/api/openai/suggestion', {
                 method: 'POST',
