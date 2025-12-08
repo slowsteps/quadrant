@@ -61,7 +61,7 @@ export default async function handler(req) {
             }
         });
 
-        console.log("prompt: " + prompt);
+        // console.log("prompt: " + prompt);
 
         const messages = [
             { role: "system", content: "You are a product strategy expert helping to analyze competitive landscapes. Always respond with valid JSON only. Always use metric units." },
