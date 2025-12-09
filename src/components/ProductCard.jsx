@@ -204,7 +204,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 specifications
             );
 
-            console.log('AI Enrichment Result:', result);
+            // console.log('AI Enrichment Result:', result);
 
             // Update position
             updateProductAxisValues(product.id, {
