@@ -220,7 +220,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 reasoning: result.reasoning,
                 usps: result.usps,
                 specifications: result.specifications || {},
-                sources: result.sources || []
+                sources: result.sources || [],
+                lastEnriched: Date.now()
             });
 
             // Update local state
@@ -254,6 +255,14 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
     const prevLastEnriched = useRef(product.lastEnriched);
 
     useEffect(() => {
+        // Trigger on mount if recently enriched (created via AI)
+        if (product.lastEnriched && (Date.now() - product.lastEnriched < 2000)) {
+            setShowUpdateAnim(true);
+            const timer = setTimeout(() => setShowUpdateAnim(false), 2000);
+            return () => clearTimeout(timer);
+        }
+
+        // Trigger on update
         if (product.lastEnriched && product.lastEnriched !== prevLastEnriched.current) {
             setShowUpdateAnim(true);
             const timer = setTimeout(() => setShowUpdateAnim(false), 2000);
@@ -289,17 +298,19 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                 onFocus();
             }}
         >
-            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${showUpdateAnim ? 'ring-2 ring-emerald-400 scale-105' : (isFocused && !isEditing ? 'ring-2 ring-indigo-400' : '')}`}>
+            <div className={`relative ${cardColor} backdrop-blur-sm border shadow-md rounded-2xl p-3 min-w-[120px] max-w-[200px] flex flex-col items-center gap-2 hover:shadow-xl transition-all ${showUpdateAnim ? 'ring-2 ring-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] scale-105' : (isFocused && !isEditing ? 'ring-2 ring-indigo-400' : '')}`}>
 
                 {/* Persistent Header: Logo & Name */}
+                {/* Persistent Header: Logo & Name */}
                 <motion.div
-                    layout={false}
+                    layout="position"
                     className="flex flex-col items-center gap-2 w-full"
                     onDoubleClick={() => !isEditing && setIsEditing(true)}
                 >
                     {/* Logo (show from product if available, or if editing and we have one) */}
                     {(product.logoUrl || (isEditing && editLogoUrl)) && (
-                        <img
+                        <motion.img
+                            layout="position"
                             src={isEditing ? editLogoUrl : product.logoUrl}
                             alt={product.name}
                             className="w-8 h-8 object-contain select-none pointer-events-none"
@@ -309,7 +320,8 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
                     {/* Name: Input when editing, Div when viewing, but identical styling */}
                     {isEditing ? (
-                        <input
+                        <motion.input
+                            layout="position"
                             ref={inputRef}
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
@@ -318,9 +330,12 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             className="w-full text-sm font-bold text-slate-800 bg-white border border-transparent hover:border-slate-300 rounded px-1 py-0.5 focus:outline-none focus:border-slate-300 focus:ring-0 text-center transition-colors break-words"
                         />
                     ) : (
-                        <div className="text-sm font-bold text-slate-800 text-center break-words w-full px-1 py-0.5 select-none border border-transparent">
+                        <motion.div
+                            layout="position"
+                            className="text-sm font-bold text-slate-800 text-center break-words w-full px-1 py-0.5 select-none border border-transparent"
+                        >
                             {product.name}
-                        </div>
+                        </motion.div>
                     )}
                 </motion.div>
 
@@ -333,7 +348,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                         transition={{
                             opacity: { delay: 0.2, duration: 0.15 }
                         }}
-                        className="w-full overflow-hidden"
+                        className="w-full"
                     >
                         <div className="flex flex-col gap-2 pt-2">
                             {/* Close Button */}
@@ -444,16 +459,17 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             )}
 
                             {/* Refresh Button (Moved to bottom) */}
-                            <div className="flex gap-2 justify-center w-full mt-2 pt-2 border-t border-slate-100">
+                            <div className="relative flex gap-2 justify-center w-full mt-2 pt-2 border-t border-slate-100">
                                 <button
                                     onClick={handleEnrichProduct}
                                     disabled={isAiLoading || !editName.trim()}
-                                    className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1.5 rounded border border-indigo-100 hover:bg-indigo-100 disabled:opacity-50 w-full justify-center"
+                                    className="relative z-10 flex items-center gap-1 text-[10px] bg-white text-slate-600 px-2 py-1.5 rounded border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-50 w-full justify-center transition-colors"
                                     title="Refresh data with AI"
                                 >
                                     {isAiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                     <span>Refresh Data</span>
                                 </button>
+
                             </div>
                         </div>
                     </motion.div>

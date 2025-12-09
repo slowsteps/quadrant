@@ -146,6 +146,7 @@ export function AppProvider({ children }) {
             usps: usps || [],
             specifications: specifications || {},
             sources: sources || [],
+            lastEnriched: Date.now(),
             axisValues: axisValues || defaultAxisValues
         }]);
         setIsDirty(true);
