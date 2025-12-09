@@ -308,7 +308,11 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                     onDoubleClick={() => !isEditing && setIsEditing(true)}
                 >
                     {/* Logo (show from product if available, or if editing and we have one) */}
-                    {(product.logoUrl || (isEditing && editLogoUrl)) && (
+                    {isAiLoading ? (
+                        <div className="w-8 h-8 flex items-center justify-center">
+                            <Loader2 size={24} className="animate-spin text-slate-300" />
+                        </div>
+                    ) : (product.logoUrl || (isEditing && editLogoUrl)) ? (
                         <motion.img
                             layout="position"
                             src={isEditing ? editLogoUrl : product.logoUrl}
@@ -316,7 +320,7 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                             className="w-8 h-8 object-contain select-none pointer-events-none"
                             onError={(e) => e.target.style.display = 'none'}
                         />
-                    )}
+                    ) : null}
 
                     {/* Name: Input when editing, Div when viewing, but identical styling */}
                     {isEditing ? (
