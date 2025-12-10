@@ -9,6 +9,8 @@ import { AppProvider, useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthProvider';
 import OnboardingModal from './OnboardingModal';
 import WelcomePage from './WelcomePage';
+import { generatePPT } from '../utils/pptExport';
+import { Presentation } from 'lucide-react';
 
 function LayoutContent() {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -16,7 +18,7 @@ function LayoutContent() {
         currentFileName, updateFileName,
         pages, activePageId, setActivePageId,
         isDirty, saveToCloud, fetchQuadrants, loadQuadrant, newProject, deleteQuadrant,
-        axes, activeXAxisId, activeYAxisId
+        axes, activeXAxisId, activeYAxisId, products
     } = useApp();
     const { user, signInWithGoogle, signOut } = useAuth();
 
@@ -207,6 +209,24 @@ function LayoutContent() {
                     {/* Save & Recent (Only if logged in) */}
                     {user && (
                         <>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        setIsSaving(true); // Reuse saving loader state
+                                        await generatePPT({ pages, axes, products, fileName: currentFileName });
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert('Failed to export PPT');
+                                    } finally {
+                                        setIsSaving(false);
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium"
+                                title="Export to PowerPoint"
+                            >
+                                <Presentation size={18} />
+                                Export PPT
+                            </button>
                             <button
                                 onClick={newProject}
                                 className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium"
