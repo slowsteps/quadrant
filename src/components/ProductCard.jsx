@@ -253,6 +253,11 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
 
     const [showUpdateAnim, setShowUpdateAnim] = useState(false);
     const prevLastEnriched = useRef(product.lastEnriched);
+    const [logoError, setLogoError] = useState(false);
+
+    useEffect(() => {
+        setLogoError(false);
+    }, [product.logoUrl]);
 
     useEffect(() => {
         // Trigger on mount if recently enriched (created via AI)
@@ -312,15 +317,31 @@ export default function ProductCard({ product, x, y, containerRef, onDragEnd, is
                         <div className="w-8 h-8 flex items-center justify-center">
                             <Loader2 size={24} className="animate-spin text-slate-300" />
                         </div>
-                    ) : (product.logoUrl || (isEditing && editLogoUrl)) ? (
+                    ) : (!logoError && (product.logoUrl || (isEditing && editLogoUrl))) ? (
                         <motion.img
                             layout="position"
-                            src={isEditing ? editLogoUrl : product.logoUrl}
+                            src={(() => {
+                                const url = isEditing ? editLogoUrl : product.logoUrl;
+                                // Use proxy for Google Favicons to detect default globe
+                                if (url && url.includes('google.com/s2/favicons')) {
+                                    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+                                }
+                                return url;
+                            })()}
                             alt={product.name}
                             className="w-8 h-8 object-contain select-none pointer-events-none"
-                            onError={(e) => e.target.style.display = 'none'}
+                            onError={() => setLogoError(true)}
                         />
-                    ) : null}
+                    ) : (
+                        <motion.div
+                            layout="position"
+                            className="w-8 h-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center pointer-events-none select-none"
+                        >
+                            <span className="text-slate-500 font-bold text-xs uppercase">
+                                {(isEditing ? editName : product.name)?.charAt(0) || '?'}
+                            </span>
+                        </motion.div>
+                    )}
 
                     {/* Name: Input when editing, Div when viewing, but identical styling */}
                     {isEditing ? (
